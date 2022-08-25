@@ -144,7 +144,7 @@ html_str_hdr = """
 html_str = html_str_hdr * """
     <body>
         <div style="max-width: 700px;">
-            <h1>PorpidPostproc</h1>
+            <h1>PORPIDpipeline</h1>
             <h4><i>Version: $(snakemake.params["VERSION"])</i></h4>
             <h4><i>Commit ID: $(snakemake.params["COMMIT"])</i></h4>
             

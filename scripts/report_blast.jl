@@ -1,5 +1,5 @@
 ENV["MPLBACKEND"] = "Agg"
-using PorpidPostproc, Base64, CSV, DataFrames, NextGenSeqUtils, FASTX, WebBlast
+using PORPIDpipeline, Base64, CSV, DataFrames, NextGenSeqUtils, FASTX, WebBlast
 
 
 
@@ -87,7 +87,7 @@ html_str = """
     </head>
     <body>
         <div style="max-width: 700px;">
-            <h2>PorpidPostproc report</h2>
+            <h2>PORPIDpipeline report</h2>
             <h3><i>Sample: $(sample)</i></h3>
             <h3><i>Dataset: $(dataset)</i></h3>
             <h4><i>Version: $(snakemake.params["VERSION"])</i></h3>

@@ -133,7 +133,7 @@ html_str = """
     </head>
     <body>
         <div style="max-width: 700px;">
-            <h1>PorpidPostproc, Blast results</h1>
+            <h1>PORPIDpipeline, Blast results</h1>
             <h4><i>Version: $(snakemake.params["VERSION"])</i></h4>
             <h4><i>Commit ID: $(snakemake.params["COMMIT"])</i></h4>
             

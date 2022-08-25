@@ -1,5 +1,5 @@
 ENV["MPLBACKEND"] = "Agg"
-using PorpidPostproc, NextGenSeqUtils, BioSequences, DataFrames,CSV, DataFramesMeta
+using PORPIDpipeline, NextGenSeqUtils, BioSequences, DataFrames,CSV, DataFramesMeta
 # include("../../src/functions.jl")
 # include("../../src/contam-filter_functions.jl")
 

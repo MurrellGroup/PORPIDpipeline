@@ -1,4 +1,4 @@
-using PorpidPostproc, NextGenSeqUtils, FASTX
+using PORPIDpipeline, NextGenSeqUtils, FASTX
 
 # zip porpid and postproc directories for easy download
 

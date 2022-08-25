@@ -94,7 +94,7 @@ html_str_hdr = """
 html_str = html_str_hdr * """
     <body>
         <div style="max-width: 700px;">
-            <h2>PorpidPostproc report</h2>
+            <h2>PORPIDpipeline report</h2>
             <h3><i>Sample: $(sample)</i></h3>
             <h3><i>Dataset: $(dataset)</i></h3>
             <h4><i>Version: $(snakemake.params["VERSION"])</i></h3>
@@ -145,7 +145,7 @@ html_str = html_str_hdr * """
             </p>
             $(pr_tbl)
             <p>
-               Note that the total number of sequences output by <tt>PorpidPostproc</tt>
+               Note that the total number of sequences output by <tt>PORPIDpipeline</tt>
                can be computed by subracting the rejection counts in the table above
                from the number of <tt>likely-real</tt> UMI families.
                These <i>successful</i> sequences can be found in the <tt>fasta</tt> file: <br>

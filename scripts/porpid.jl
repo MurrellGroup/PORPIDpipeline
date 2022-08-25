@@ -1,5 +1,5 @@
 ENV["MPLBACKEND"] = "Agg"
-using PorpidPostproc, NextGenSeqUtils, PORPID, StatsBase,
+using PORPIDpipeline, NextGenSeqUtils, PORPID, StatsBase,
 HypothesisTests, DataFrames, BioSequences, IterTools, CSV, FASTX
 
 function NextGenSeqUtils.write_fastq(filename, seqs, phreds::Vector{Vector{Phred}};

@@ -1,5 +1,5 @@
 ENV["MPLBACKEND"] = "Agg"
-using PorpidPostproc, NextGenSeqUtils, StatsBase
+using PORPIDpipeline, NextGenSeqUtils, StatsBase
 using BioSequences, FASTX
 using DataFrames, CSV
 using CodecZlib: GzipDecompressorStream
