@@ -1,0 +1,76 @@
+import subprocess, sys
+configfile: "config.yaml"
+DATASETS = [d for d in config for s in config[d]]
+SAMPLES = [s for d in config for s in config[d]]
+VERSION = "1.0"
+COMMIT = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD']).strip().decode()
+
+sys.stderr.write("Running Blast scripts for PorpidPostproc\n")
+sys.stderr.write("Version: {0}\n".format(VERSION))
+sys.stderr.write("Commit ID: {0}\n".format(COMMIT))
+
+def contam_input(wildcards):
+    SAMPLES = [s for s in config[wildcards.dataset]]
+    return expand("porpid/{dataset}/consensus/{sample}.fasta",
+        dataset = wildcards.dataset,
+        sample = SAMPLES
+    )
+
+# PorpidPostproc BLAST parameters
+# report_blast
+thresh_hold = 0.05   # default 0.05
+max_clades = 5       # default 5
+max_waits = 10       # default 10
+# tar_blast
+degap = "true"       # default "true"
+
+rule all_blast:
+    input:
+        expand("postproc/{dataset}-postproc-blast.tar.gz",
+            dataset = DATASETS)
+
+rule report_blast:
+    input:
+        "postproc/{dataset}/{sample}/{sample}.fasta",
+        "postproc/{dataset}/{sample}/{sample}.fasta.rejected.fasta"
+    params:
+        VERSION = VERSION,
+        COMMIT = COMMIT,
+        thresh_hold = thresh_hold,
+        max_clades = max_clades,
+        max_waits =max_waits
+    output:
+        "postproc/{dataset}/{sample}/{sample}-blast.html",
+        "postproc/{dataset}/{sample}/{sample}-blast.csv"
+    script:
+        "scripts/report_blast.jl"
+        
+rule index_blast:
+    input:
+        expand("postproc/{dataset}/{sample}/{sample}-report.html", zip, dataset = DATASETS, sample = SAMPLES),
+        expand("postproc/{dataset}/{sample}/{sample}-blast.csv", zip, dataset = DATASETS, sample = SAMPLES)
+    params:
+        VERSION = VERSION,
+        COMMIT = COMMIT,
+        SAMPLES = SAMPLES,
+        thresh_hold = thresh_hold,
+        max_clades = max_clades,
+        max_waits =max_waits
+    output:
+        "postproc/{dataset}/{dataset}-blast.html",
+        "postproc/{dataset}/{dataset}-blast.csv"
+    script:
+        "scripts/index_blast.jl"
+        
+rule tar_blast:
+    input:
+        "postproc/{dataset}/{dataset}-blast.html",
+        "postproc/{dataset}/{dataset}-blast.csv"
+    output:
+         "postproc/{dataset}-postproc-blast.tar.gz"
+    params:
+        degap = degap,
+        datasets = DATASETS,
+        samples = SAMPLES
+    script:
+        "scripts/tar_blast.jl"

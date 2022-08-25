@@ -1,0 +1,21 @@
+name: PorpidPostproc
+dependencies:
+  - snakemake-minimal
+  - mafft
+  - fasttree
+  - pandas
+  - jinja2
+  - networkx
+  - pygraphviz
+  - pygments
+  - imagemagick
+  - boto
+  - moto
+  - filechunkio
+  - pysftp
+  - requests
+  - ftputil
+  - XRootD
+  - matplotlib
+  - seaborn
+  - julia=1.7.1

@@ -1,0 +1,11 @@
+.snakemake/
+logs/
+combined/
+hercules/
+report.html
+.DS_Store
+._*
+dag.pdf
+snakemake-report.html*
+.ipynb_checkpoints/
+primers/
