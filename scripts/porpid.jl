@@ -2,23 +2,6 @@ ENV["MPLBACKEND"] = "Agg"
 using PORPIDpipeline, NextGenSeqUtils, PORPID, StatsBase,
 HypothesisTests, DataFrames, BioSequences, IterTools, CSV, FASTX
 
-function NextGenSeqUtils.write_fastq(filename, seqs, phreds::Vector{Vector{Phred}};
-                     names=String[], LongSequence = false,
-                     append = false)
-    if !LongSequence
-        seqs = [LongCharSeq(s) for s in seqs]
-    end
-    stream = open(FASTQ.Writer, filename, append=append)
-    i = 0
-    if length(names) != length(seqs)
-        names = [string("seq_", i) for i in 1:length(seqs)]
-    end
-    for (s, q, n) in zip(seqs, phreds, names)
-        i += 1
-        write(stream, FASTQ.Record(n, s, q))
-    end
-    close(stream)
-end
 
 #iterate through samples, run PORPID, and filter families.
 t1 = time()
