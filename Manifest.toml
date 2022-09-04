@@ -745,7 +745,7 @@ version = "1.4.2"
 deps = ["DataFrames", "EzXML", "HTTP"]
 git-tree-sha1 = "76d5bbcb3f19dd7f34e7d041a5d199ce6268d807"
 repo-rev = "main"
-repo-url = "https://github.com/HughMurrell/WebBlast.jl.git"
+repo-url = "https://github.com/MurrellGroup/WebBlast.jl.git"
 uuid = "9f6dbb68-adea-48dd-82a4-058b403bed1f"
 version = "0.1.0"
 
