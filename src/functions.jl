@@ -1,10 +1,12 @@
 using NextGenSeqUtils, DPMeansClustering,
 RobustAmpliconDenoising, StatsBase,
 PyPlot, MultivariateStats,
-BioSequences,MolecularEvolution,
+BioSequences,
 Distributions,LinearAlgebra,DataFrames,CSV,
 DataFramesMeta, Seaborn,
 Compose, Colors
+
+import MolecularEvolution
 
 #Extra import
 function read_fasta_with_everything(filename; seqtype=String)
@@ -633,20 +635,20 @@ function highlighter_figure(fasta_collection; out_path = "figure.png")
         SVG(out_path, 20cm, 20cm) #blank SVG
     else
         treestring = fasttree_nuc(collapsed_seqs, collapsed_names; quiet = true)[1];
-        newt = gettreefromnewick(treestring, GeneralFelNode);
-        root = [n for n in getleaflist(newt) if split(n.name,'_')[1] == "v1"][1]
-        rerooted = ladderize(reroot(root))
+        newt = MolecularEvolution.gettreefromnewick(treestring, MolecularEvolution.GeneralFelNode);
+        root = [n for n in MolecularEvolution.getleaflist(newt) if split(n.name,'_')[1] == "v1"][1]
+        rerooted = MolecularEvolution.ladderize(MolecularEvolution.reroot(root))
 
         dot_size_dict = Dict()
         all_sizes = []
-        for n in getleaflist(rerooted)
+        for n in MolecularEvolution.getleaflist(rerooted)
             dot_size_dict[n] = sqrt(get_size(n.name))
             push!(all_sizes,get_size(n.name))
         end
         tot_size = sum(all_sizes)
 
         color_dict = Dict()
-        for n in getleaflist(rerooted)
+        for n in MolecularEvolution.getleaflist(rerooted)
             if get_size(n.name) > tot_size/10
                 color_dict[n] = "red"
             else
@@ -654,7 +656,7 @@ function highlighter_figure(fasta_collection; out_path = "figure.png")
             end
         end
 
-        img = highlighter_tree_draw(rerooted, uppercase.(collapsed_seqs), collapsed_names, uppercase(collapsed_seqs[1]);
+        img = MolecularEvolution.highlighter_tree_draw(rerooted, uppercase.(collapsed_seqs), collapsed_names, uppercase(collapsed_seqs[1]);
             legend_colors = NT_colors, legend_padding = 1cm,
             tree_args = [:line_width => 0.5mm, :font_size => 1, :dot_size_dict => dot_size_dict, :label_color_dict => color_dict,
                 :dot_color_dict => color_dict, :max_dot_size => 0.1, :dot_opacity => 0.6, :name_opacity => 0.8])
@@ -662,6 +664,7 @@ function highlighter_figure(fasta_collection; out_path = "figure.png")
     end
 end
 
+#-
 function gettreefromnewick(str, T::DataType; tagged = false, disable_binarize = false)
     currnode = T()
     i = 1
@@ -740,3 +743,4 @@ function gettreefromnewick(str, T::DataType; tagged = false, disable_binarize = 
     
     return (tagged ? (currnode, tag_dict) : currnode)
 end
+-#

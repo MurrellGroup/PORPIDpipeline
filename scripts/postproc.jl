@@ -1,5 +1,6 @@
 ENV["MPLBACKEND"] = "Agg"
-using PORPIDpipeline, CSV, NextGenSeqUtils, BioSequences, MolecularEvolution, DataFrames, DataFramesMeta
+using PORPIDpipeline, CSV, NextGenSeqUtils, BioSequences, DataFrames, DataFramesMeta
+import MolecularEvolution
 
 # include("../../src/functions.jl")
 # include("../../src/apobec_model.jl")
