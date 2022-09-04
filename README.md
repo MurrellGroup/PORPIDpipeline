@@ -1,6 +1,6 @@
 # PORPIDpipeline
 
-This repository is an upgrade of PORPID-postproc (by Alec Pankow)
+by Alec Pankow and Ben Murrell, now maintained by Hugh Murrell
 
 now upgraded to Julia version 1.7.1
 
