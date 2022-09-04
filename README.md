@@ -344,6 +344,6 @@ Each node in the graph is a *rule* in the The [Snakefile](Snakefile).
 
 An introduction to PacBio sequencing and an explanation for each *PORPIDpipeline* rule 
 is given in the set of introductory slides packaged with this repository.
-[docs/slides/PORPIDpipeline.pdf](docs/slides/PORPIDpipelinePipeline.pdf)
+[docs/slides/PORPIDpipeline.pdf](docs/slides/PORPIDpipeline.pdf)
 
 
