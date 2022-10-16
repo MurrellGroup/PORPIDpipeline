@@ -129,8 +129,8 @@ To generate your own panel file you are encouraged to visit:
 where you can download an alignment and then use `aliview` to trim 
 the alignment to your region of interest.
 
-Raw CCS .fastq files should be placed in the `raw-reads/` subdirectory and named 
-according to the the dataset name used in the `config.yaml` file, ie, `demo.fastq`
+gzipped CCS .fastq files should be placed in the `raw-reads/` subdirectory and named 
+according to the the dataset name used in the `config.yaml` file, ie, `demo.fastq.gz`
 for the *demo* dataset.
 
 ### Preview and Execution
