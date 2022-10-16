@@ -122,6 +122,13 @@ The **panel** arg should be a path to a `.fasta` alignment spanning your amplico
 with all gaps stripped. This will be used only in the postproccessing step to remove 
 off-target seqs and trim to the correct coordinates.
 
+To generate your own panel file you are encouraged to visit:
+
+[https://www.hiv.lanl.gov/content/sequence/NEWALIGN/align.html](https://www.hiv.lanl.gov/content/sequence/NEWALIGN/align.html)
+
+where you can download an alignment and then use `aliview` to trim 
+the alignment to your region of interest.
+
 Raw CCS .fastq files should be placed in the `raw-reads/` subdirectory and named 
 according to the the dataset name used in the `config.yaml` file, ie, `demo.fastq`
 for the *demo* dataset.
