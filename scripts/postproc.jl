@@ -12,6 +12,7 @@ tag_df = CSV.read(snakemake.input[2], DataFrame)
 sample = snakemake.wildcards["sample"]
 dataset = snakemake.wildcards["dataset"]
 fs_thresh = snakemake.params["fs_thresh"]
+af_thresh = snakemake.params["af_thresh"]
 agreement_thresh = snakemake.params["agreement_thresh"]
 panel_thresh = snakemake.params["panel_thresh"]
 
@@ -35,12 +36,12 @@ if !isfile(snakemake.params["panel"])
 end
 panel_file = snakemake.params["panel"]
 
-ali_seqs,seqnames = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh)
+ali_seqs,seqnames = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh, af_thresh=af_thresh)
 
 
 sp_selected = @linq tag_df |> where(:Sample .== sample)
 sp_selected = @linq sp_selected |> where(:tags .!= "BPB-rejects")
-fig = family_size_umi_len_stripplot(sp_selected,fs_thresh=fs_thresh)
+fig = family_size_umi_len_stripplot(sp_selected,fs_thresh=fs_thresh,af_thresh=af_thresh)
 fig.savefig(snakemake.output[5];
     transparent = true,
     dpi = 200,

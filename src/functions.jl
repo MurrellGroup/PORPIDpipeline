@@ -455,11 +455,25 @@ function fasttree_AA(seqs,seqnames; quiet = false)
 end
 
 """
+    artefact_cutoff(ccs_counts,af_thresh)
+Compute ccs cutoff from vector of ccs_counts and a threshold between 0 and 1
+"""
+function artefact_cutoff(ccs_counts,af_thresh)
+    ccs=sort(ccs_counts)
+    tot=sum(ccs)
+    cum_ccs=cumsum(ccs)
+    cut=tot*af_thresh
+    cut_ind=findfirst(x->x>cut,cum_ccs)
+    af_cutoff=ccs[cut_ind]
+    return(af_cutoff)
+end
+
+"""
     family_size_umi_len_stripplot
 Draws a stripplot of family sizes vs. UMI length from an input
 DataFrame. Returns the figure object.
 """
-function family_size_umi_len_stripplot(data; fs_thresh=5)
+function family_size_umi_len_stripplot(data; fs_thresh=5, af_thresh=0.15)
     tight_layout()
     fig = figure(figsize = (6,2))
     ax = PyPlot.axes()
@@ -469,14 +483,20 @@ function family_size_umi_len_stripplot(data; fs_thresh=5)
         hue = data[!,:tags],
         hue_order = [
             "fs<$(fs_thresh)",
-            "UMI_len != 8",
+            "possible_artefact",
             "likely_real",
+            "UMI_len != 8",
             "LDA-rejects",
             "heteroduplex"
         ],
         alpha = 0.2, dodge = true, jitter = 0.3, orient = "h")
-        labels = xlabel("UMI family size"), ylabel("UMI length")
-
+    
+    af_cutoff=artefact_cutoff(data[!,:fs], af_thresh)
+    axvline([af_cutoff-0.5],label="artefact threshold")
+    
+    aftp=Int(af_thresh*100)
+    labels = xlabel("UMI family size with $(aftp)% artefact threshold"), ylabel("UMI length")
+    
     # Shrink current axis by 20%
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])

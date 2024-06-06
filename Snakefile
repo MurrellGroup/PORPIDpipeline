@@ -23,7 +23,7 @@ error_rate = 0.01    # default 0.01
 min_length = 2100    # default 2100
 max_length = 4300    # default 4300
 #porpid
-fs_thresh = 5        # default 5
+fs_thresh = 1        # default 1 (must be 1 for artefact filter to work)
 lda_thresh = 0.995   # default 0.995
 #contam
 cluster_thresh = 0.015   # default 0.015
@@ -32,6 +32,7 @@ dist_thresh = 0.015      # default 0.015
 # change to "off" to switch off contam filter
 contam_toggle = "on"   # default "on" 
 #postproc
+af_thresh = 0.15  # default 0.15 (drops smallest 15% of CCS reads)
 agreement_thresh = 0.7   # default 0.7
 panel_thresh = 50        # default 50
 #tar
@@ -72,7 +73,8 @@ rule porpid:
         # directory("porpid/{dataset}/porpid/{sample}.fastq/{sample}")
     params:
         config = lambda wc: config[wc.dataset][wc.sample],
-	    fs_thresh = fs_thresh,
+        fs_thresh = fs_thresh,
+        af_thresh = af_thresh,
         lda_thresh= lda_thresh
     script:
         "scripts/porpid.jl"
@@ -100,7 +102,7 @@ rule contam:
         proportion_thresh =proportion_thresh,
         cluster_thresh = cluster_thresh,
         dist_thresh = dist_thresh,
-	contam_toggle = contam_toggle
+        contam_toggle = contam_toggle
     script:
         "scripts/contam.jl"
 
@@ -121,6 +123,7 @@ rule postproc:
         report("postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png", category = "postproc", caption = "report-rst/di_nuc_freq.rst")
     params:
         panel = lambda wc: config[wc.dataset][wc.sample]["panel"],
+        af_thresh = af_thresh,
         fs_thresh = fs_thresh,
         agreement_thresh = agreement_thresh,
         panel_thresh = panel_thresh
@@ -162,14 +165,15 @@ rule index:
         cluster_thresh = cluster_thresh,
         dist_thresh = dist_thresh,
         fs_thresh = fs_thresh, 
+        af_thresh = af_thresh,
         lda_thresh = lda_thresh,
         agreement_thresh = agreement_thresh,
         panel_thresh = panel_thresh,
-	contam_toggle = contam_toggle
+        contam_toggle = contam_toggle
     output:
         "postproc/{dataset}/{dataset}-index.html",
         "postproc/{dataset}/{dataset}-blast.html",
-	"postproc/{dataset}/{dataset}-sequence_report.csv"
+        "postproc/{dataset}/{dataset}-sequence_report.csv"
     script:
         "scripts/index.jl"
         

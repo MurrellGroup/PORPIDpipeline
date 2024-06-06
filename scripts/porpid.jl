@@ -7,6 +7,7 @@ HypothesisTests, DataFrames, BioSequences, IterTools, CSV, FASTX
 t1 = time()
 config = snakemake.params["config"]
 fs_thresh = snakemake.params["fs_thresh"]
+af_thresh = snakemake.params["af_thresh"]
 lda_thresh = snakemake.params["lda_thresh"]
 data_dir = snakemake.input[1]
 ID = uppercase(match(r"[a-z]+", config["cDNA_primer"]).match)
@@ -100,6 +101,21 @@ tag_df = filterCCSFamilies(most_likely_real_for_each_obs, path,
 
 if BPB_rejects > 0
     push!(tag_df, [template_name, "REJECTED", BPB_rejects, "BPB-rejects", -5.123456789])
+end
+
+# rename possible artefacts
+ccs=tag_df[tag_df[!,:tags].=="likely_real",:fs]
+sort!(ccs)
+tot=sum(ccs)
+cum_ccs=cumsum(ccs)
+cut=tot*af_thresh
+cut_ind=findfirst(x->x>cut,cum_ccs)
+af_cutoff=ccs[cut_ind]
+println("labeling reads with fs under $(af_cutoff) as possible artefacts")
+for row in eachrow(tag_df)
+    if row[:tags] == "likely_real" && row[:fs]<af_cutoff
+        row[:tags]="possible_artefact"
+    end
 end
 
 CSV.write(snakemake.output[2], sort!(tag_df, [:Sample, :tags, :fs], rev = [false, false, true])); #fix

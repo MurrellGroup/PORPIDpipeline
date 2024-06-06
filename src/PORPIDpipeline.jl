@@ -8,7 +8,8 @@ export # functions
     family_size_umi_len_stripplot,
     highlighter_figure,
     gettreefromnewick,
-    di_nuc_freqs
+    di_nuc_freqs,
+    artefact_cutoff
 # export # molev_functions
 #     highlighter_figure
 export # porpid-analysis-methods

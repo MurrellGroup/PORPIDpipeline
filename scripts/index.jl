@@ -51,30 +51,32 @@ demux_df = CSV.read("porpid/$(dataset)/demux_report.csv", DataFrame)
 demux_tbl = format_tbl(demux_df)
 
 ####### make a table of ALL read counts
-seq_counts_df = DataFrame(Sample = [], Porpid_Seqs = [], Rejected_Min_Ag = [], Rejected_Panel = [], Rejected_Seqs = [], Final_Seqs = [])
+seq_counts_df = DataFrame(Sample = [], Porpid_Seqs = [], Rej_Min_Ag = [], Rej_Artefact = [], Rej_Panel = [], Rej_Seqs = [], Final_Seqs = [])
 for sample in sort(snakemake.params["SAMPLES"])
     p_seqs, p_seq_names = read_fasta("porpid/$(dataset)/consensus/$(sample).fasta")    #porpid sequences
     r_seqs, r_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.fasta") #rejected sequences
     f_seqs, f_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta") #final sequences
     sample_reject_df = CSV.read("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.csv", DataFrame) #reject split
     r_ma_seq_number = sample_reject_df[1,"count"]
-    r_pan_seq_number = sample_reject_df[2,"count"]
+    r_art_seq_number = sample_reject_df[2,"count"]
+    r_pan_seq_number = sample_reject_df[3,"count"]
     p_seq_number = length(p_seqs)
     r_seq_number = length(r_seqs)
     f_seq_number = length(f_seqs)
-    push!(seq_counts_df, [sample, p_seq_number, r_ma_seq_number, r_pan_seq_number, r_seq_number, f_seq_number])
+    push!(seq_counts_df, [sample, p_seq_number, r_ma_seq_number, r_art_seq_number, r_pan_seq_number, r_seq_number, f_seq_number])
 end
 seq_counts_df[!, :Porpid_Seqs] = convert.(Int, seq_counts_df[:, :Porpid_Seqs])
-seq_counts_df[!, :Rejected_Min_Ag] = convert.(Int, seq_counts_df[:, :Rejected_Min_Ag])
-seq_counts_df[!, :Rejected_Panel] = convert.(Int, seq_counts_df[:, :Rejected_Panel])
-seq_counts_df[!, :Rejected_Seqs] = convert.(Int, seq_counts_df[:, :Rejected_Seqs])
+seq_counts_df[!, :Rej_Min_Ag] = convert.(Int, seq_counts_df[:, :Rej_Min_Ag])
+seq_counts_df[!, :Rej_Artefact] = convert.(Int, seq_counts_df[:, :Rej_Artefact])
+seq_counts_df[!, :Rej_Panel] = convert.(Int, seq_counts_df[:, :Rej_Panel])
+seq_counts_df[!, :Rej_Seqs] = convert.(Int, seq_counts_df[:, :Rej_Seqs])
 seq_counts_df[!, :Final_Seqs] = convert.(Int, seq_counts_df[:, :Final_Seqs])
 
 #create final table with sequence number and reads per template for porpid seqs
 joined_df = innerjoin(seq_counts_df, demux_df, on = :Sample)
 joined_df = rename!(joined_df,:Count => :Read_Count) #change Counts column name to Read_Count
 joined_df[!, :Reads_per_Porpid_Seq] = joined_df[!, :Read_Count] ./ joined_df[!, :Porpid_Seqs]
-joined_df = select(joined_df, [:Sample, :Reads_per_Porpid_Seq], :Porpid_Seqs, :Rejected_Min_Ag, :Rejected_Panel, :Rejected_Seqs, :Final_Seqs)
+joined_df = select(joined_df, [:Sample, :Reads_per_Porpid_Seq], :Porpid_Seqs, :Rej_Min_Ag, :Rej_Artefact, :Rej_Panel, :Rej_Seqs, :Final_Seqs)
 joined_df_tbl = format_tbl(joined_df)
 CSV.write(snakemake.output[3], joined_df)
 
@@ -217,8 +219,10 @@ for sample in sort(snakemake.params["SAMPLES"])
     success = 0
     nr = nrow(qc_bins)
     nc = ncol(qc_bins)
-    if qc_bins[nr,1] == "likely_real"
-        success = floor(Int, 100 * qc_bins[nr,nc] / sum(qc_bins[:,nc]))
+    for r in 1:nr
+        if qc_bins[r,1] == "likely_real"
+            success = floor(Int, 100 * qc_bins[r,nc] / sum(qc_bins[:,nc]))
+        end
     end
     
     global html_str = html_str * "<tr> <td><a href=$(sample)/$(sample)-report.html target=blank> $(sample) </a> </td> <td style=\"text-align:center\"> $(demux_dict[sample]) </td>  <td> $(success)% </td></tr>"
@@ -229,14 +233,15 @@ html_str = html_str * """
     <h4>parameters:</h4>
     <ul>
       <li> fs_thresh = $(snakemake.params["fs_thresh"]) </li>
+      <li> af_thresh = $(snakemake.params["af_thresh"]) </li>
       <li> lda_thresh = $(snakemake.params["lda_thresh"]) </li>
       <li> agreement_thresh = $(snakemake.params["agreement_thresh"]) </li>
       <li> panel_thresh = $(snakemake.params["panel_thresh"]) </li>
     </ul>
     <h3>sequence counts:</h3>
     $(joined_df_tbl)
-    Summary of sequence output from porpid, those that were rejected for being too disimilar to
-    the panel file, and the final sequence count after filtering. Reads per porpid sequence
+    Summary of sequence output from porpid, those that were rejected and the
+    final sequence count after filtering. Reads per porpid sequence
     can be used to compare average depth across different samples. 
 """;
 
