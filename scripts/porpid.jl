@@ -105,12 +105,13 @@ end
 
 # rename possible artefacts
 ccs=tag_df[tag_df[!,:tags].=="likely_real",:fs]
-sort!(ccs)
-tot=sum(ccs)
-cum_ccs=cumsum(ccs)
-cut=tot*af_thresh
-cut_ind=findfirst(x->x>cut,cum_ccs)
-af_cutoff=ccs[cut_ind]
+af_cutoff=artefact_cutoff(ccs,af_thresh)
+# sort!(ccs)
+# tot=sum(ccs)
+# cum_ccs=cumsum(ccs)
+# cut=tot*af_thresh
+# cut_ind=findfirst(x->x>cut,cum_ccs)
+# af_cutoff=ccs[cut_ind]
 println("labeling reads with fs under $(af_cutoff) as possible artefacts")
 for row in eachrow(tag_df)
     if row[:tags] == "likely_real" && row[:fs]<af_cutoff

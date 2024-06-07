@@ -473,7 +473,8 @@ end
 Draws a stripplot of family sizes vs. UMI length from an input
 DataFrame. Returns the figure object.
 """
-function family_size_umi_len_stripplot(data; fs_thresh=5, af_thresh=0.15)
+function family_size_umi_len_stripplot(data;
+                    fs_thresh=5, af_thresh=0.15, af_cutoff=1)
     tight_layout()
     fig = figure(figsize = (6,2))
     ax = PyPlot.axes()
@@ -491,11 +492,11 @@ function family_size_umi_len_stripplot(data; fs_thresh=5, af_thresh=0.15)
         ],
         alpha = 0.2, dodge = true, jitter = 0.3, orient = "h")
     
-    af_cutoff=artefact_cutoff(data[!,:fs], af_thresh)
+    # af_cutoff=artefact_cutoff(data[!,:fs], af_thresh)
     axvline([af_cutoff-0.5],label="artefact threshold")
     
     aftp=Int(af_thresh*100)
-    labels = xlabel("UMI family size with $(aftp)% artefact threshold"), ylabel("UMI length")
+    labels = xlabel("UMI family size with $(aftp)% artefact threshold (fs=$(af_cutoff))"), ylabel("UMI length")
     
     # Shrink current axis by 20%
     box = ax.get_position()

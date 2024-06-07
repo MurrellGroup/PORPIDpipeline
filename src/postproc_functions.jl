@@ -8,7 +8,7 @@ MDS plots with APOBEC model, and save MolEv phylogeny.
 """
 function H704_init_template_proc(fasta_collection, panel_file,
       mds_plot_file, apobec_file, realigned_tre_plot_file, realigned_file;
-      agreement_thresh=0.7, panel_thresh=50, af_thresh=0.15)
+      agreement_thresh=0.7, panel_thresh=50, af_thresh=0.15, af_cutoff=1)
     reject_df = DataFrame(reject_reason=String[],threshold=Float64[],count=Int64[])
     f = fasta_collection
     #align consensus
@@ -16,7 +16,7 @@ function H704_init_template_proc(fasta_collection, panel_file,
     annot_names = seqnames .* " num_CCS=" .* string.(sizes) .* " min_agreement=" .* string.(agreement_scores)
     
     # calculate af_cutoff before losing any ccs counts
-    af_cutoff = artefact_cutoff(sizes,af_thresh)
+    # af_cutoff = artefact_cutoff(sizes,af_thresh)
     
     # filter reads that do not make minimum agreement
     push!(reject_df,["minimum_agreement < threshold",agreement_thresh,
