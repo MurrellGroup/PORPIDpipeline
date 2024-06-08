@@ -147,7 +147,7 @@ html_str = html_str_hdr * """
             <p>
                Note that the total number of sequences output by <tt>PORPIDpipeline</tt>
                can be computed by subracting the rejection counts in the table above
-               from the number of <tt>likely-real</tt> UMI families.
+               from the sum of the number of <tt>likely-real</tt> and <tt>possible-artefact</tt> UMI families.
                These <i>successful</i> sequences can be found in the <tt>fasta</tt> file: <br>
                <tt> postproc/$(dataset)/$(sample)/$(sample).fasta </tt>
             <h3>

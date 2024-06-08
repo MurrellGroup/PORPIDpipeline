@@ -18,27 +18,27 @@ function H704_init_template_proc(fasta_collection, panel_file,
     # calculate af_cutoff before losing any ccs counts
     # af_cutoff = artefact_cutoff(sizes,af_thresh)
     
+    # filter artefacts
+    push!(reject_df,["ccs_count < artefact cutoff",af_cutoff,sum(sizes .< af_cutoff)])
+    reject_seqs=seqs[sizes .< af_cutoff]
+    reject_names=annot_names[sizes .< af_cutoff].*" artefact"
+    seqs = seqs[sizes .>= af_cutoff]
+    annot_names = annot_names[sizes .>= af_cutoff]
+    agreement_scores = agreement_scores[sizes .>= af_cutoff]
+    sizes = sizes[sizes .>= af_cutoff]
+    
     # filter reads that do not make minimum agreement
     push!(reject_df,["minimum_agreement < threshold",agreement_thresh,
-    sum(agreement_scores .< agreement_thresh)])
+        sum(agreement_scores .< agreement_thresh)])
     
-    reject_seqs = seqs[agreement_scores .< agreement_thresh]
-    reject_names = annot_names[agreement_scores .< agreement_thresh] .* " no_min_agreement"
+    reject_seqs = vcat(reject_seqs, seqs[agreement_scores .< agreement_thresh])
+    reject_names = vcat(reject_names, annot_names[agreement_scores .< agreement_thresh] .* " no_min_agreement" )
     
     #filter, minimum_agreement >= agreement_thresh (default 0.7)
     seqs = seqs[agreement_scores .>= agreement_thresh]
     annot_names = annot_names[agreement_scores .>=agreement_thresh]
     sizes = sizes[agreement_scores .>= agreement_thresh]
     agreement_scores = agreement_scores[agreement_scores .>= agreement_thresh]
-    
-    # filter artefacts
-    push!(reject_df,["ccs_count < artefact cutoff",af_cutoff,sum(sizes .< af_cutoff)])
-    reject_seqs=vcat(reject_seqs,seqs[sizes .< af_cutoff])
-    reject_names=vcat(reject_names,annot_names[sizes .< af_cutoff].*" artefact")
-    seqs = seqs[sizes .>= af_cutoff]
-    annot_names = annot_names[sizes .>= af_cutoff]
-    agreement_scores = agreement_scores[sizes .>= af_cutoff]
-    sizes = sizes[sizes .>= af_cutoff]
     
     ali_seqs = mafft_align(seqs);
     
