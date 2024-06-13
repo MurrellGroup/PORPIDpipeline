@@ -21,7 +21,7 @@ function H704_init_template_proc(fasta_collection, panel_file,
     # filter artefacts
     push!(reject_df,["ccs_count < artefact cutoff",af_cutoff,sum(sizes .< af_cutoff)])
     reject_seqs=seqs[sizes .< af_cutoff]
-    reject_names=annot_names[sizes .< af_cutoff].*" artefact"
+    reject_names=annot_names[sizes .< af_cutoff].*" possible_artefact_at_$(af_cutoff)_cutoff"
     seqs = seqs[sizes .>= af_cutoff]
     annot_names = annot_names[sizes .>= af_cutoff]
     agreement_scores = agreement_scores[sizes .>= af_cutoff]

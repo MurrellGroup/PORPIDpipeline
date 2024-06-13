@@ -117,6 +117,7 @@ rule postproc:
         report("postproc/{dataset}/{sample}/{sample}.fasta.tre.svg", category = "postproc", caption = "report-rst/highlighter.rst"),
         "postproc/{dataset}/{sample}/{sample}.fasta",
         report("postproc/{dataset}/{sample}/{sample}_qc_bins.png", category = "postproc", caption = "report-rst/bins.rst"),
+        report("postproc/{dataset}/{sample}/{sample}_artefacts.png", category = "postproc", caption = "report-rst/artefacts.rst"),
         "postproc/{dataset}/{sample}/{sample}_qc_bins.csv",
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.fasta",
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.csv",
@@ -133,6 +134,7 @@ rule postproc:
 rule report:
     input:
         "postproc/{dataset}/{sample}/{sample}_qc_bins.png",
+        "postproc/{dataset}/{sample}/{sample}_artefacts.png",
         "postproc/{dataset}/{sample}/{sample}_qc_bins.csv",
         "postproc/{dataset}/{sample}/{sample}.fasta.mds.png",
         "postproc/{dataset}/{sample}/{sample}.fasta.tre.svg",
@@ -144,8 +146,7 @@ rule report:
         VERSION = VERSION,
         COMMIT = COMMIT
     output:
-        "postproc/{dataset}/{sample}/{sample}-report.html",
-        "postproc/{dataset}/{sample}/{sample}-blast.html"
+        "postproc/{dataset}/{sample}/{sample}-report.html"
     script:
         "scripts/report.jl"
         
@@ -172,7 +173,6 @@ rule index:
         contam_toggle = contam_toggle
     output:
         "postproc/{dataset}/{dataset}-index.html",
-        "postproc/{dataset}/{dataset}-blast.html",
         "postproc/{dataset}/{dataset}-sequence_report.csv"
     script:
         "scripts/index.jl"

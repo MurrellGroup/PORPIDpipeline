@@ -55,11 +55,22 @@ fig.savefig(snakemake.output[5];
     transparent = true,
     dpi = 200,
     bbox_inches = "tight")
+    
+sp_selected = @linq tag_df |> where(:Sample .== sample)
+sp_artefacts = @linq sp_selected |> where(:tags .== "possible_artefact")
+sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
+sp_selected = vcat(sp_artefacts, sp_reals)
+fig = family_size_stripplot(sp_selected,fs_thresh=fs_thresh,af_thresh=af_thresh,af_cutoff=af_cutoff)
+fig.savefig(snakemake.output[6];
+    transparent = true,
+    dpi = 200,
+    bbox_inches = "tight")
+
 selected = @linq tag_df |> where(:Sample .== sample)
 gdf = DataFramesMeta.groupby(selected, :tags)
 summary = @combine gdf cols(AsTable) = ( porpid_result=first(:tags), n_UMI_families=length(:fs), n_CCS=sum(:fs) )
 # println( summary[!, [:porpid_result,:n_UMI_families,:n_CCS]] )
-CSV.write(snakemake.output[6],summary[!, [:porpid_result,:n_UMI_families,:n_CCS]])
+CSV.write(snakemake.output[7],summary[!, [:porpid_result,:n_UMI_families,:n_CCS]])
 
 umi_dir=snakemake.input[3]*"/"*sample
 umis = readdir(umi_dir)
@@ -72,7 +83,7 @@ for k in 1:length(umis)
   umis[k] = umis[k][1:j-1]
 end
 fig = di_nuc_freqs(umis, weights=weights )
-fig.savefig(snakemake.output[9];
+fig.savefig(snakemake.output[10];
   transparent = true,
   dpi = 200,
   bbox_inches = "tight")

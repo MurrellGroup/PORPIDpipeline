@@ -1,5 +1,5 @@
 ENV["MPLBACKEND"] = "Agg"
-using Base64, CSV, DataFrames, NextGenSeqUtils, FASTX, WebBlast
+using Base64, CSV, DataFrames, NextGenSeqUtils, FASTX
 
 function get_image_str(file)
     fig_str = open(file,"r") do io
@@ -78,7 +78,7 @@ joined_df = rename!(joined_df,:Count => :Read_Count) #change Counts column name 
 joined_df[!, :Reads_per_Porpid_Seq] = joined_df[!, :Read_Count] ./ joined_df[!, :Porpid_Seqs]
 joined_df = select(joined_df, [:Sample, :Reads_per_Porpid_Seq], :Porpid_Seqs, :Rej_Min_Ag, :Rej_Artefact, :Rej_Panel, :Rej_Seqs, :Final_Seqs)
 joined_df_tbl = format_tbl(joined_df)
-CSV.write(snakemake.output[3], joined_df)
+CSV.write(snakemake.output[2], joined_df)
 
 
 contam_df = CSV.read("porpid/$(dataset)/contam_report.csv", DataFrame)
@@ -114,12 +114,7 @@ reject_tbl = format_tbl(reject_df);
 
 demux_dict = Dict(Pair.(demux_df.Sample, demux_df.Count))
 
-
-br_tbl = "click <a href=$(dataset)-blast.html> here </a> for blast reports."
-
 # get parameters for parameter reporting
-
-
 
 html_str_hdr = """
 <html>
@@ -245,37 +240,8 @@ html_str = html_str * """
     can be used to compare average depth across different samples. 
 """;
 
-
-
-html_str = html_str * """
-            <h4> BLAST results for clades identified in each sample </h4>
-            $(br_tbl)
-        </div>
-    </body>
- </html>
-""";
-
 open(snakemake.output[1],"w") do io
     write(io,html_str)
 end
-
-html_str = html_str_hdr * """
-<body>
-<h3> Blast results ... </h3>
-
-No blast results available yet, to get blast results run
-
-<code>
-snakemake -s SnakeBlast -k --rerun-incomplete -j1
-</code>
-</body>
-"""
-
-open(snakemake.output[2],"w") do io
-    write(io,html_str)
-end
-
-
-
 
 

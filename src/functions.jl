@@ -493,10 +493,11 @@ function family_size_umi_len_stripplot(data;
         alpha = 0.2, dodge = true, jitter = 0.3, orient = "h")
     
     # af_cutoff=artefact_cutoff(data[!,:fs], af_thresh)
-    axvline([af_cutoff-0.5],label="artefact threshold")
+    axvline([af_cutoff-0.5],c="red",label="artefact threshold")
     
     aftp=Int(af_thresh*100)
-    labels = xlabel("UMI family size with $(aftp)% artefact threshold (fs=$(af_cutoff))"), ylabel("UMI length")
+    labels = xlabel("UMI family size"), ylabel("UMI length")
+    #  with $(aftp)% artefact threshold (fs=$(af_cutoff))
     
     # Shrink current axis by 20%
     box = ax.get_position()
@@ -514,6 +515,67 @@ function family_size_umi_len_stripplot(data;
 
     return fig
 end
+
+"""
+    family_size_stripplot
+Draws a stripplot of family sizes with large jitter for possible_artefacts
+and likely_reals from an input DataFrame. Returns the figure object.
+"""
+function family_size_stripplot(data;
+                    fs_thresh=5, af_thresh=0.15, af_cutoff=1)
+    tight_layout()
+    fig = figure(figsize = (6,1))
+    ax = PyPlot.axes()
+
+    stripplot( y = [length(ix) for ix in data[!,:UMI]],
+        x = data[!,:fs],
+        hue = data[!,:tags],
+        hue_order = [
+            "fs<$(fs_thresh)",
+            "possible_artefact",
+            "likely_real"
+        ],
+        alpha = 0.6, dodge = false, jitter = 0.8, orient = "h")
+    
+    # af_cutoff=artefact_cutoff(data[!,:fs], af_thresh)
+    
+    axvline([af_cutoff-0.5],c="red",label="artefact threshold")
+    
+    for afths in 0.05:0.1:0.85
+        afc=artefact_cutoff(data[!,:fs], afths)
+        axvline([afc-0.5],alpha=1.0)
+    end
+    
+    afths=0.95
+    afc=artefact_cutoff(data[!,:fs], afths)
+    axvline([afc-0.5],alpha=1.0,label="5% 15% ... 95%")
+    
+    axvline([af_cutoff-0.5],c="red")
+    
+    
+    aftp=Int(af_thresh*100)
+    
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    # Put a legend to the right of the current axis
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+
+    # Summary for plot title
+    t = @transform(data, :is_likely_real = :tags .== "likely_real")
+    g = DataFramesMeta.groupby(t,:is_likely_real)
+    # cts = @based_on(g, CCS = sum(:fs))
+    cts = @combine(g, :CCS = sum(:fs))
+    cts = sort!(cts, [:is_likely_real], rev = true)
+    pc_artefact = round(100 * cts[2, :CCS] / (cts[1, :CCS] + cts[2, :CCS]),digits=1)
+    
+    labels = xlabel("$(aftp)% af-thresh (fs=$(af_cutoff)) = $(pc_artefact)% artefacts"),
+            ylabel("jitter plot")
+    # title("percent artefact = $(pc_artefact)%")
+
+    return fig
+end
+
 
 """
     di_nuc_freqs(umis,weights)
