@@ -38,12 +38,14 @@ panel_file = snakemake.params["panel"]
 
 # get af_cutoff from tags dataframe
 sp_selected = @linq tag_df |> where(:Sample .== sample)
-sp_selected = @linq sp_selected |> where(:tags .== "possible_artefact")
 fss = sp_selected[!,:fs]
-af_cutoff=1
-if length(fss)>0
-    af_cutoff=maximum(fss)+1
-end
+af_cutoff=artefact_cutoff(fss,af_thresh)
+sp_selected = @linq sp_selected |> where(:tags .== "possible_artefact")
+# fss = sp_selected[!,:fs]
+# af_cutoff=1
+# if length(fss)>0
+#     af_cutoff=maximum(fss)+1
+# end
 
 ali_seqs,seqnames = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh, af_thresh=af_thresh, af_cutoff=af_cutoff)
 

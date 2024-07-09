@@ -459,12 +459,13 @@ end
 Compute ccs cutoff from vector of ccs_counts and a threshold between 0 and 1
 """
 function artefact_cutoff(ccs_counts,af_thresh)
-    ccs=sort(ccs_counts)
-    tot=sum(ccs)
-    cum_ccs=cumsum(ccs)
-    cut=tot*af_thresh
-    cut_ind=findfirst(x->x>cut,cum_ccs)
-    af_cutoff=ccs[cut_ind]
+    # ccs=sort(ccs_counts)
+    # tot=sum(ccs)
+    # cum_ccs=cumsum(ccs)
+    # cut=tot*af_thresh
+    # cut_ind=findfirst(x->x>cut,cum_ccs)
+    # af_cutoff=ccs[cut_ind]
+    af_cutoff = Int(ceil(maximum(ccs_counts)*af_thresh))
     return(af_cutoff)
 end
 
@@ -524,7 +525,7 @@ and likely_reals from an input DataFrame. Returns the figure object.
 function family_size_stripplot(data;
                     fs_thresh=5, af_thresh=0.15, af_cutoff=1)
     tight_layout()
-    fig = figure(figsize = (6,1))
+    fig = figure(figsize = (6,2))
     ax = PyPlot.axes()
 
     stripplot( y = [length(ix) for ix in data[!,:UMI]],
