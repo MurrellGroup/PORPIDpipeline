@@ -563,12 +563,15 @@ function family_size_stripplot(data;
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
     # Summary for plot title
-    t = @transform(data, :is_likely_real = :tags .== "likely_real")
-    g = DataFramesMeta.groupby(t,:is_likely_real)
+    # t = @transform(data, :is_likely_real = :tags .== "likely_real")
+    # g = DataFramesMeta.groupby(t,:is_likely_real)
     # cts = @based_on(g, CCS = sum(:fs))
-    cts = @combine(g, :CCS = sum(:fs))
-    cts = sort!(cts, [:is_likely_real], rev = true)
-    pc_artefact = round(100 * cts[2, :CCS] / (cts[1, :CCS] + cts[2, :CCS]),digits=1)
+    # cts = @combine(g, :CCS = sum(:fs))
+    # cts = sort!(cts, [:is_likely_real], rev = true)
+    # pc_artefact = round(100 * cts[2, :CCS] / (cts[1, :CCS] + cts[2, :CCS]),digits=1)
+    nlr=sum(data[!,:tags].=="likely_real")
+    naf=sum(data[!,:tags].=="possible_artefact")
+    pc_artefact = round(100 * naf / (nlr + naf),digits=1)
     
     labels = xlabel("$(aftp)% af-thresh (fs=$(af_cutoff)) = $(pc_artefact)% artefacts"),
             ylabel("jitter plot")

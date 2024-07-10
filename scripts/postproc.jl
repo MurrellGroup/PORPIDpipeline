@@ -38,9 +38,12 @@ panel_file = snakemake.params["panel"]
 
 # get af_cutoff from tags dataframe
 sp_selected = @linq tag_df |> where(:Sample .== sample)
+sp_artefacts = @linq sp_selected |> where(:tags .== "possible_artefact")
+sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
+sp_selected = vcat(sp_artefacts, sp_reals)
 fss = sp_selected[!,:fs]
 af_cutoff=artefact_cutoff(fss,af_thresh)
-sp_selected = @linq sp_selected |> where(:tags .== "possible_artefact")
+
 # fss = sp_selected[!,:fs]
 # af_cutoff=1
 # if length(fss)>0
