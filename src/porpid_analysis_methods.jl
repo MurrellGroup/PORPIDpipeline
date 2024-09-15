@@ -1,8 +1,7 @@
-using Distributed
-@everywhere ENV["MPLBACKEND"] = "Agg"
+ENV["MPLBACKEND"] = "Agg"
 using PORPID, PyPlot, StatsBase, HypothesisTests,
     IterTools, DataFrames, CSV, DataFramesMeta, BioSequences
-@everywhere using RobustAmpliconDenoising, NextGenSeqUtils
+using RobustAmpliconDenoising, NextGenSeqUtils
 
 #=
 function unique_not_substr(a)
@@ -93,7 +92,7 @@ function generateConsensusFromDir(dir, template_name)
         println("WARNING: no template families for $(template_name)")
         exit()
     end
-    cons_collection = pmap(ConsensusFromFastq, files)
+    cons_collection = map(ConsensusFromFastq, files)
     seq_collection = [i[1] for i in cons_collection]
     seqname_collection = [template_name*i[2] for i in cons_collection]
     return seq_collection, seqname_collection
@@ -113,7 +112,7 @@ function generateConsensusFromDirSingleThread(dir, template_name)
     return seq_collection, seqname_collection
 end
 
-@everywhere function ConsensusFromFastq(file)
+function ConsensusFromFastq(file)
     seqs,phreds,seq_names = read_fastq(file)
     draft = consensus_seq(seqs)
     draft2 = refine_ref(draft, seqs)
@@ -123,7 +122,7 @@ end
     return final_cons, cons_name
 end
 
-@everywhere begin
+
 """
 Returns an array of degapped coordinates, such that
 coords(ref, read)[i] gives you the position the aligned read/ref
@@ -145,9 +144,8 @@ function coords(ref, read)
     end
     return coordMap
 end
-end
 
-@everywhere begin
+
 """
 Return matches to a candidate reference from a set of reads.
 """
@@ -169,7 +167,6 @@ function getReadMatches(candidate_ref, reads, shift; degap_param = true, kmer_al
        matches = [freq(matchContent[k], candidate_ref[k:k+shift]) for k in 1:length(matchContent)]
     end
     return alignments, maps, matches, matchContent
-end
 end
 
 """

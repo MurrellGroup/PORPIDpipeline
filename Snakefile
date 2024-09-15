@@ -16,6 +16,20 @@ def contam_input(wildcards):
         sample = SAMPLES
     )
 
+def bottle1_input(wildcards):
+    SAMPLES = [s for s in config[wildcards.dataset]]
+    return expand("porpid/{dataset}/tags/{sample}.csv",
+        dataset = wildcards.dataset,
+        sample = SAMPLES
+    )
+    
+def bottle2_input(wildcards):
+    SAMPLES = [s for s in config[wildcards.dataset]]
+    return expand("postproc/{dataset}/{sample}/{sample}.fasta",
+        dataset = wildcards.dataset,
+        sample = SAMPLES
+    )
+
 # PorpidPostproc parameters
 # demux
 chunk_size = 10000   # default 10000
@@ -74,18 +88,30 @@ rule porpid:
     params:
         config = lambda wc: config[wc.dataset][wc.sample],
         fs_thresh = fs_thresh,
-        af_thresh = af_thresh,
         lda_thresh= lda_thresh
     script:
         "scripts/porpid.jl"
+        
+rule bottle1:
+    input:
+        files = bottle1_input
+    output:
+        "porpid/{dataset}/bottle1_report.csv"
+    script:
+        "scripts/bottle.jl"
 
 rule consensus:
     input:
-        "porpid/{dataset}/porpid/{sample}.fastq"
+        "porpid/{dataset}/porpid/{sample}.fastq",
+        "porpid/{dataset}/tags/{sample}.csv",
+        "porpid/{dataset}/bottle1_report.csv"
     output:
-        "porpid/{dataset}/consensus/{sample}.fasta"
+        "porpid/{dataset}/consensus/{sample}.fasta",
+        "porpid/{dataset}/tags_filtered/{sample}.csv"
     params:
-        config = lambda wc: config[wc.dataset][wc.sample]
+        config = lambda wc: config[wc.dataset][wc.sample],
+        af_thresh = af_thresh,
+        agreement_thresh = agreement_thresh
     script:
         "scripts/consensus.jl"
 
@@ -109,7 +135,7 @@ rule contam:
 rule postproc:
     input:
         "porpid/{dataset}/contam_passed",
-        "porpid/{dataset}/tags/{sample}.csv",
+        "porpid/{dataset}/tags_filtered/{sample}.csv",
         "porpid/{dataset}/porpid/{sample}.fastq"
     output:
         report("postproc/{dataset}/{sample}/{sample}.fasta.mds.png", category = "postproc", caption = "report-rst/mds.rst"),
@@ -130,6 +156,14 @@ rule postproc:
         panel_thresh = panel_thresh
     script:
         "scripts/postproc.jl"
+        
+rule bottle2:
+    input:
+        files = bottle2_input
+    output:
+        "postproc/{dataset}/bottle2_report.csv"
+    script:
+        "scripts/bottle.jl"
 
 rule report:
     input:
@@ -141,7 +175,8 @@ rule report:
         "postproc/{dataset}/{sample}/{sample}.fasta",
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.fasta",
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.csv",
-        "postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png"
+        "postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png",
+        "postproc/{dataset}/bottle2_report.csv"
     params:
         VERSION = VERSION,
         COMMIT = COMMIT

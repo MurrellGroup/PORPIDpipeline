@@ -1,3 +1,8 @@
+using Pkg
+Pkg.activate("./")
+Pkg.instantiate()
+Pkg.precompile()
+
 ENV["MPLBACKEND"] = "Agg"
 using PORPIDpipeline, CSV, NextGenSeqUtils, BioSequences, DataFrames, DataFramesMeta
 import MolecularEvolution
@@ -37,12 +42,12 @@ end
 panel_file = snakemake.params["panel"]
 
 # get af_cutoff from tags dataframe
-sp_selected = @linq tag_df |> where(:Sample .== sample)
-sp_artefacts = @linq sp_selected |> where(:tags .== "possible_artefact")
-sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
-sp_selected = vcat(sp_artefacts, sp_reals)
-fss = sp_selected[!,:fs]
-af_cutoff=artefact_cutoff(fss,af_thresh)
+# sp_selected = @linq tag_df |> where(:Sample .== sample)
+# sp_artefacts = @linq sp_selected |> where(:tags .== "maybe-artefact")
+# sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
+# sp_selected = vcat(sp_artefacts, sp_reals)
+# fss = sp_selected[!,:fs]
+# af_cutoff=artefact_cutoff(fss,af_thresh)
 
 # fss = sp_selected[!,:fs]
 # af_cutoff=1
@@ -50,22 +55,24 @@ af_cutoff=artefact_cutoff(fss,af_thresh)
 #     af_cutoff=maximum(fss)+1
 # end
 
-ali_seqs,seqnames = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh, af_thresh=af_thresh, af_cutoff=af_cutoff)
-
+ali_seqs,seqnames,af_cutoff = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh, af_thresh=af_thresh)
 
 sp_selected = @linq tag_df |> where(:Sample .== sample)
 sp_selected = @linq sp_selected |> where(:tags .!= "BPB-rejects")
-fig = family_size_umi_len_stripplot(sp_selected,fs_thresh=fs_thresh,af_thresh=af_thresh,af_cutoff=af_cutoff)
+fig = family_size_umi_len_stripplot(sp_selected,fs_thresh=fs_thresh,
+        af_thresh=af_thresh,af_cutoff=af_cutoff)
 fig.savefig(snakemake.output[5];
     transparent = true,
     dpi = 200,
     bbox_inches = "tight")
     
 sp_selected = @linq tag_df |> where(:Sample .== sample)
-sp_artefacts = @linq sp_selected |> where(:tags .== "possible_artefact")
+sp_artefacts = @linq sp_selected |> where(:tags .== "maybe-artefact")
+sp_minag_rejects = @linq sp_selected |> where(:tags .== "minag-reject")
 sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
-sp_selected = vcat(sp_artefacts, sp_reals)
-fig = family_size_stripplot(sp_selected,fs_thresh=fs_thresh,af_thresh=af_thresh,af_cutoff=af_cutoff)
+sp_selected = vcat(sp_artefacts, sp_reals, sp_minag_rejects)
+fig = family_size_stripplot(sp_selected,fs_thresh=fs_thresh,
+        af_thresh=af_thresh,af_cutoff=af_cutoff)
 fig.savefig(snakemake.output[6];
     transparent = true,
     dpi = 200,

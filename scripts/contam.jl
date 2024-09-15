@@ -1,3 +1,8 @@
+using Pkg
+Pkg.activate("./")
+Pkg.instantiate()
+Pkg.precompile()
+
 ENV["MPLBACKEND"] = "Agg"
 using PORPIDpipeline, NextGenSeqUtils, BioSequences, DataFrames,CSV, DataFramesMeta
 # include("../../src/functions.jl")

@@ -1,7 +1,7 @@
 using NextGenSeqUtils, DPMeansClustering,
 RobustAmpliconDenoising, StatsBase,
 PyPlot, MultivariateStats,
-BioSequences,
+BioSequences, MAFFT_jll, FastTree_jll,
 Distributions,LinearAlgebra,DataFrames,CSV,
 DataFramesMeta, Seaborn,
 Compose, Colors
@@ -75,7 +75,7 @@ end
 
 """
     mafft(inpath, outpath; path="", flags::Vector{String}=String[], kwargs...)
-Julia wrapper for mafft.
+Julia wrapper for mafft that makes use of MAFFT_jll.
 """
 function mafft(inpath, outpath; path="", flags::Vector{String}=String[], kwargs...)
     mktempdir() do mydir
@@ -91,7 +91,7 @@ function mafft(inpath, outpath; path="", flags::Vector{String}=String[], kwargs.
        end
        progress = "$(mydir)/mafft.progress"
        # --adjustdirection
-       run(`$mafft $flagstrings $args --quiet --progress $progress --out $outpath $inpath`)
+       run(`$(mafft_fftns()) $flagstrings $args --quiet --progress $progress --out $outpath $inpath`)
    end
 end
 
@@ -424,9 +424,9 @@ function fasttree_nuc(seqs,seqnames; quiet = false)
        treefile = string(mydir, "/fasttree.newick")
        write_fasta(string(mydir, "/sequences.fasta"), seqs,names = seqnames)
        if quiet
-       run(`fasttree -quiet -nosupport -nt -gtr -out $(treefile) $(seqfile)`)
+       run(`$(fasttree_double()) -quiet -nosupport -nt -gtr -out $(treefile) $(seqfile)`)
        else
-       run(`fasttree -nosupport -nt -gtr -out $(treefile) $(seqfile)`)
+       run(`$(fasttree_double()) -nosupport -nt -gtr -out $(treefile) $(seqfile)`)
        end
        #open the file and return lines
        lines = open(string(mydir,"/fasttree.newick"), "r") do io
@@ -442,9 +442,9 @@ function fasttree_AA(seqs,seqnames; quiet = false)
        treefile = string(mydir, "/fasttree.newick")
        write_fasta(string(mydir, "/sequences.fasta"), seqs,names = seqnames)
        if quiet
-       run(`fasttree -quiet -nosupport -out $(treefile) $(seqfile)`)
+       run(`$(fasttree_double()) -quiet -nosupport -out $(treefile) $(seqfile)`)
        else
-       run(`fasttree -nosupport -out $(treefile) $(seqfile)`)
+       run(`$(fasttree_double()) -nosupport -out $(treefile) $(seqfile)`)
        end
        #open the file and return lines
        lines = open(string(mydir,"/fasttree.newick"), "r") do io
@@ -479,19 +479,32 @@ function family_size_umi_len_stripplot(data;
     tight_layout()
     fig = figure(figsize = (6,2))
     ax = PyPlot.axes()
+    
+    
 
     stripplot(y = [length(ix) for ix in data[!,:UMI]],
         x = data[!,:fs],
         hue = data[!,:tags],
         hue_order = [
             "fs<$(fs_thresh)",
-            "possible_artefact",
+            "maybe-artefact",
             "likely_real",
             "UMI_len != 8",
             "LDA-rejects",
+            "minag-reject",
             "heteroduplex"
         ],
-        alpha = 0.2, dodge = true, jitter = 0.3, orient = "h")
+        alpha = 0.6, dodge = true, jitter = 0.3, orient = "h", ax=ax)
+        
+            
+    yticklabels = ax.get_yticklabels()
+    new_ytick_labels=(x->x[:get_text]()).(yticklabels)
+    allowed=["7","8","9"]
+    new_ytick_labels=(x->x in allowed ? x : " ").(new_ytick_labels)
+    @show new_ytick_labels
+    
+    ax.set(yticks=ax.get_yticks(), yticklabels=new_ytick_labels, ylim=ax.get_ylim())
+
     
     # af_cutoff=artefact_cutoff(data[!,:fs], af_thresh)
     axvline([af_cutoff-0.5],c="red",label="artefact threshold")
@@ -519,8 +532,8 @@ end
 
 """
     family_size_stripplot
-Draws a stripplot of family sizes with large jitter for possible_artefacts
-and likely_reals from an input DataFrame. Returns the figure object.
+Draws a stripplot of family sizes with large jitter for maybe-artefact
+and likely_real from an input DataFrame. Returns the figure object.
 """
 function family_size_stripplot(data;
                     fs_thresh=5, af_thresh=0.15, af_cutoff=1)
@@ -533,22 +546,25 @@ function family_size_stripplot(data;
         hue = data[!,:tags],
         hue_order = [
             "fs<$(fs_thresh)",
-            "possible_artefact",
-            "likely_real"
+            "maybe-artefact",
+            "likely_real",
+            "minag-reject"
         ],
-        alpha = 0.6, dodge = false, jitter = 0.8, orient = "h")
+        alpha = 0.6, dodge = false, jitter = 0.4, orient = "h")
+        
+    ccs = data[ (data[!,:tags].=="likely_real") .|| (data[!,:tags].=="maybe-artefact"), :fs]
     
-    # af_cutoff=artefact_cutoff(data[!,:fs], af_thresh)
+    af_cutoff=artefact_cutoff(ccs, af_thresh)
     
     axvline([af_cutoff-0.5],c="red",label="artefact threshold")
     
     for afths in 0.05:0.1:0.85
-        afc=artefact_cutoff(data[!,:fs], afths)
+        afc=artefact_cutoff(ccs, afths)
         axvline([afc-0.5],alpha=1.0)
     end
     
     afths=0.95
-    afc=artefact_cutoff(data[!,:fs], afths)
+    afc=artefact_cutoff(ccs, afths)
     axvline([afc-0.5],alpha=1.0,label="5% 15% ... 95%")
     
     axvline([af_cutoff-0.5],c="red")
@@ -570,12 +586,11 @@ function family_size_stripplot(data;
     # cts = sort!(cts, [:is_likely_real], rev = true)
     # pc_artefact = round(100 * cts[2, :CCS] / (cts[1, :CCS] + cts[2, :CCS]),digits=1)
     nlr=sum(data[!,:tags].=="likely_real")
-    naf=sum(data[!,:tags].=="possible_artefact")
+    naf=sum(data[!,:tags].=="maybe-artefact")
     pc_artefact = round(100 * naf / (nlr + naf),digits=1)
     
     labels = xlabel("$(aftp)% af-thresh (fs=$(af_cutoff)) = $(pc_artefact)% artefacts"),
             ylabel("jitter plot")
-    # title("percent artefact = $(pc_artefact)%")
 
     return fig
 end
@@ -722,7 +737,7 @@ function highlighter_figure(fasta_collection; out_path = "figure.png")
         SVG(out_path, 20cm, 20cm) #blank SVG
     else
         treestring = fasttree_nuc(collapsed_seqs, collapsed_names; quiet = true)[1];
-        newt = MolecularEvolution.gettreefromnewick(treestring, MolecularEvolution.GeneralFelNode);
+        newt = MolecularEvolution.gettreefromnewick(treestring, MolecularEvolution.FelNode);
         root = [n for n in MolecularEvolution.getleaflist(newt) if split(n.name,'_')[1] == "v1"][1]
         rerooted = MolecularEvolution.ladderize(MolecularEvolution.reroot(root))
 
@@ -745,7 +760,7 @@ function highlighter_figure(fasta_collection; out_path = "figure.png")
 
         img = MolecularEvolution.highlighter_tree_draw(rerooted, uppercase.(collapsed_seqs), collapsed_names, uppercase(collapsed_seqs[1]);
             legend_colors = NT_colors, legend_padding = 1cm,
-            tree_args = [:line_width => 0.5mm, :font_size => 1, :dot_size_dict => dot_size_dict, :label_color_dict => color_dict,
+            tree_args = [:line_width => 0.2mm, :font_size => 1, :dot_size_dict => dot_size_dict, :label_color_dict => color_dict,
                 :dot_color_dict => color_dict, :max_dot_size => 0.1, :dot_opacity => 0.6, :name_opacity => 0.8])
         compose(context(0.05,0.01,0.95,0.99), img) |> SVG(out_path, 20cm, 20cm)
     end

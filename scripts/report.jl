@@ -1,5 +1,10 @@
+using Pkg
+Pkg.activate("./")
+Pkg.instantiate()
+Pkg.precompile()
+
 ENV["MPLBACKEND"] = "Agg"
-using Base64, CSV, DataFrames, NextGenSeqUtils, FASTX
+using Base64, CSV, DataFrames, NextGenSeqUtils, FASTX, PrettyTables
 
 
 function get_image_str(file)
@@ -9,25 +14,10 @@ function get_image_str(file)
     return Base64.base64encode(fig_str)
 end
 
-function format_tbl(df)
-    # df = CSV.read(file, DataFrame)
-    tbl_html = DataFrames.repr("text/html", df)
-    tbl_fmt = replace(tbl_html,
-        "<table class=\"data-frame\">" => "<table class=\"table table-striped\";>")
-    tbl_fmt = replace(tbl_fmt, r"<p>.+columns</p>" => "") #remove display description
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"String\">String</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"String\">String</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"String15\">String15</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"String31\">String31</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"Int64\">Int64</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"Int64\">Int64</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"Float64\">Float64</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<tr><th></th></tr>" => "") #remove type rows
-    # tbl_fmt = replace(tbl_fmt, "<tr><th></th><th title=\"String\">String</th><th title=\"Int64\">Int64</th></tr>" => "") #remove types
-    # tbl_fmt = replace(tbl_fmt, r"<thead>.+</thead>" => "") #remove heading row
-    tbl_fmt = replace(tbl_fmt, r"<th></th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th>.</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th>..</th>" => "") #remove row count column
+function format_tbl(df; font="12px")
+    tbl_fmt = pretty_table(String, df; backend = Val(:html), alignment=:l, tf=tf_html_dark)
+    tbl_fmt = replace(tbl_fmt, "<table>" => "<div class=\"data-frame\"><table class=\"table table-striped\"; style=\"font-size:$(font);\">")
+    tbl_fmt = replace(tbl_fmt, "</table>" => "</table></div>")
     return tbl_fmt
 end
 
@@ -60,10 +50,20 @@ html_str_hdr = """
                 text-align: center;
                 align-self: center;
             }
+            .headerLastRow{
+                display: none;
+            }
+            .th {
+                border: 1px solid black;
+            }
+            .td {
+                border: 1px solid black;
+            }
             img {
                 margin: auto;
             }
         </style>
+        <!--
         <style>
         .collapsible {
           background-color: #777;
@@ -88,6 +88,7 @@ html_str_hdr = """
           background-color: #f1f1f1;
         }
         </style>
+        -->
     </head>
 """
 html_str = html_str_hdr * """

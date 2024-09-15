@@ -1,8 +1,6 @@
-name: PorpidPostproc
+name: PORPIDpipeline
 dependencies:
   - snakemake-minimal
-  - mafft
-  - fasttree
   - pandas
   - jinja2
   - networkx
@@ -18,4 +16,4 @@ dependencies:
   - XRootD
   - matplotlib
   - seaborn
-  - julia=1.7.1
+  - julia=1.10.5

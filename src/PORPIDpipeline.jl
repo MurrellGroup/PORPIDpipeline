@@ -37,10 +37,10 @@ export # porpid_functions
     porpid_write_to_file,
     porpid_write_to_dictionary,
     porpid_write_to_file_count_to_dict
-export # blast_functions
-    Hamming,
-    PairWise,
-    get_blast_results
+# export # blast_functions
+#     Hamming,
+#     PairWise,
+#     get_blast_results
 
 using BioSequences, FASTX
 
@@ -52,6 +52,6 @@ include("postproc_functions.jl")
 include("demux_functions.jl")
 include("contam-filter_functions.jl")
 include("porpid_functions.jl")
-include("blast_functions.jl")
+# include("blast_functions.jl")
 
 end # module

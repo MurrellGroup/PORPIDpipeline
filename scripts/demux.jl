@@ -1,3 +1,8 @@
+using Pkg
+Pkg.activate("./")
+Pkg.instantiate()
+Pkg.precompile()
+
 ENV["MPLBACKEND"] = "Agg"
 using PORPIDpipeline, NextGenSeqUtils, StatsBase
 using BioSequences, FASTX

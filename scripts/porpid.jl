@@ -1,3 +1,8 @@
+using Pkg
+Pkg.activate("./")
+Pkg.instantiate()
+Pkg.precompile()
+
 ENV["MPLBACKEND"] = "Agg"
 using PORPIDpipeline, NextGenSeqUtils, PORPID, StatsBase,
 HypothesisTests, DataFrames, BioSequences, IterTools, CSV, FASTX
@@ -7,7 +12,6 @@ HypothesisTests, DataFrames, BioSequences, IterTools, CSV, FASTX
 t1 = time()
 config = snakemake.params["config"]
 fs_thresh = snakemake.params["fs_thresh"]
-af_thresh = snakemake.params["af_thresh"]
 lda_thresh = snakemake.params["lda_thresh"]
 data_dir = snakemake.input[1]
 ID = uppercase(match(r"[a-z]+", config["cDNA_primer"]).match)
@@ -30,8 +34,8 @@ for (name, template) in templates
     push!(cfg.templates, Template(name, template))
 end
 
-println("Processing output/$(filtered_data_file)/...")
-println("Using template $(ID*template_suffix)")
+println("$(snakemake.wildcards["sample"]): processing output/$(filtered_data_file)/...")
+println("$(snakemake.wildcards["sample"]): using template $(ID*template_suffix)")
 if isdir(snakemake.output[1])
     @error "The directory already exists! Please delete"
     #rm(snakemake.output[1], recursive=true)
@@ -50,7 +54,7 @@ my_output_func(source_file_name,
                                            score,
                                            dirname(snakemake.output[1])) #fix
 say_print_func = function(count)
-    println("Processed $(count) sequences")
+    println("$(snakemake.wildcards["sample"]): processed $(count) sequences")
 end
 # This is the slow bit
 extract_tags_from_file(cfg.files[1],
@@ -101,22 +105,6 @@ tag_df = filterCCSFamilies(most_likely_real_for_each_obs, path,
 
 if BPB_rejects > 0
     push!(tag_df, [template_name, "REJECTED", BPB_rejects, "BPB-rejects", -5.123456789])
-end
-
-# rename possible artefacts
-ccs=tag_df[tag_df[!,:tags].=="likely_real",:fs]
-af_cutoff=artefact_cutoff(ccs,af_thresh)
-# sort!(ccs)
-# tot=sum(ccs)
-# cum_ccs=cumsum(ccs)
-# cut=tot*af_thresh
-# cut_ind=findfirst(x->x>cut,cum_ccs)
-# af_cutoff=ccs[cut_ind]
-println("labeling reads with fs under $(af_cutoff) as possible artefacts")
-for row in eachrow(tag_df)
-    if row[:tags] == "likely_real" && row[:fs]<af_cutoff
-        row[:tags]="possible_artefact"
-    end
 end
 
 CSV.write(snakemake.output[2], sort!(tag_df, [:Sample, :tags, :fs], rev = [false, false, true])); #fix

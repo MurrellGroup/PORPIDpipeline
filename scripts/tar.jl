@@ -1,3 +1,8 @@
+using Pkg
+Pkg.activate("./")
+Pkg.instantiate()
+Pkg.precompile()
+
 using PORPIDpipeline, NextGenSeqUtils, FASTX
 
 # zip porpid and postproc directories for easy download
