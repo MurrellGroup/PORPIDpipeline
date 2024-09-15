@@ -2,7 +2,7 @@
 
 by Alec Pankow and Ben Murrell, now maintained by Hugh Murrell
 
-now upgraded to Julia version 1.7.1
+now upgraded to Julia version 1.10.5
 
 ## branch master 
 
@@ -15,29 +15,31 @@ now upgraded to Julia version 1.7.1
    - `apt upgrade`
 - Snakemake
    - `apt-get install -y snakemake`
-- mafft
-   - `apt-get install -y mafft`
-- fasttree
-   - `apt-get install -y fasttree`
 - python3 packages
   - `apt-get install python3-pandas`
   - `apt-get install python3-seaborn`
 
 
-### Julia version 1.7
+### Julia version 1.10.5
 
-Download and unpack the latest Julia (we recommend version 1.7.1) from: 
-
-[https://julialang.org/downloads/](https://julialang.org/downloads/)
-
-Make sure you can enter the julia REPL from the command line, on an ubuntu machine you would do:
+We recommend you use the `juliaup` version manager to install julia.
+from a terminal you can do this as follows:
 
 ```bash
-# move the julia system to a lib directory
-mv julia-1.7.1 /usr/lib/julia-1.7.1
-# make julia v1.7.1 executable from the command line
-ln -s /usr/lib/julia-1.7.1/bin/julia /usr/local/bin/julia
-# check that you can enter the julia REPL
+curl -fsSL https://install.julialang.org | sh
+```
+
+This should install the Julia version manager, `juliaup` as well as
+the latest version of Julia. To find out how to use the version manager 
+to makesure you have version 1.10.5 as your default, go here:
+
+[https://github.com/JuliaLang/juliaup]
+
+Once Julia is installed, make sure you can enter the julia REPL from 
+the command line and check the version number, 
+from a terminal you would do:
+
+```bash
 julia --version
 ```
 
@@ -46,8 +48,7 @@ julia --version
 Now that the dependencies are setup we clone the PORPIDpipeline repository
 
 ```bash
-cd ~
-git clone git@github.com:MurrellGroup/PORPIDpipeline.git
+git clone https://github.com/MurrellGroup/PORPIDpipeline.git
 ```
 
 ### setting up the Julia package environment
@@ -65,19 +66,6 @@ This will activate, install, and precompile the `julia` environment specified by
 `Project.toml` and `Manifest.toml` files. The `precompile` command
 above is not strictly needed but is useful if there are issues with installing
 the `julia` packages listed in `Project.toml`
-
-Next, add the following text to your Julia startup file (typically at `~/.julia/config/startup.jl`; 
-you may need to create the directory if not present, `mkdir -p ~/.julia/config`).
-
-```julia
-using Pkg
-if isfile("Project.toml") && isfile("Manifest.toml")
-    Pkg.activate(".")
-end
-```
-
-This will activate the local environment at Julia startup.
-
 
 ### Configuration
 
@@ -143,6 +131,10 @@ snakemake -np
 
 #run
 snakemake -j{n}
+
+#in the cloud
+nohup snakemake -j{n}&
+cat nohup.out
 ```
 
 For more info on Snakemake, see https://snakemake.readthedocs.io/en/stable/
@@ -171,10 +163,10 @@ clone the PORPIDpipeline repository
 
 ```bash
 cd ~  # or some other directory used for your anaconda installation
-git clone git@github.com:MurrellGroup/PORPIDpipeline.git
+git clone https://github.com/MurrellGroup/PORPIDpipeline.git
 ```
 
-and then all the PORPIDpipeline dependencies including `julia` version `1.7.1`
+and then all the PORPIDpipeline dependencies including `julia` version `1.10.5`
 ( as listed in the PORPIDpipeline conda environment spec in `environment.yaml`),
 can be installed in a `conda` environment via `mamba` using the commands:
 
@@ -336,8 +328,6 @@ of cores needed for each step in the pipeline.
 
 We have not attempted this yet, and it would probably require writing a
 `slurm` efficient version of the `snakefile`. 
-
-Watch this space for further developments.
 
 ## Documentation
 
