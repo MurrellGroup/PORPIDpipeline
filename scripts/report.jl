@@ -138,24 +138,22 @@ html_str = html_str_hdr * """
                Postproc filtering
             </h3>
             <p>
-               Some <tt>likely-real</tt> UMI families may be rejected
-               by the <tt>postproc</tt> script if they do not meet threshold requirements.
+               Some UMI families may be rejected
+               by the <tt>PORPIDpipeline</tt> if they do not meet threshold requirements.
             </p><p>
-               Either they were classified as artefacts if their CCS count was less than the
-               artefact cutoff, or they were rejected because their <tt>minimum_agreement</tt>
-               score was too low or their <tt>distance_from_panel</tt> score was too high.
+               Either they were rejected because their <tt>minimum_agreement</tt>
+               score was too low or they were rejected because their <tt>distance_from_panel</tt>
+               score was too high or they were classified as artefacts if their CCS count was
+               less than the artefact cutoff.
             </p><p>
-               If the table below displays a rejection count greater than zero then
+               If the table below displays any rejection count greater than zero then
                the consensus sequence for the rejected UMI families can be inspected
                in the rejection file:<br>
                <tt> postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.fasta </tt>
             </p>
             $(pr_tbl)
             <p>
-               Note that the total number of sequences output by <tt>PORPIDpipeline</tt>
-               can be computed by subracting the rejection counts in the table above
-               from the sum of the number of <tt>likely-real</tt> and <tt>possible-artefact</tt> UMI families.
-               These <i>successful</i> sequences can be found in the <tt>fasta</tt> file: <br>
+               The <i>successful</i> sequences can be found in the <tt>fasta</tt> file: <br>
                <tt> postproc/$(dataset)/$(sample)/$(sample).fasta </tt>
             <h3>
             Post-processing of single-template consensus sequences

@@ -501,9 +501,9 @@ function family_size_umi_len_stripplot(data;
     new_ytick_labels=(x->x[:get_text]()).(yticklabels)
     allowed=["7","8","9"]
     new_ytick_labels=(x->x in allowed ? x : " ").(new_ytick_labels)
-    @show new_ytick_labels
     
-    ax.set(yticks=ax.get_yticks(), yticklabels=new_ytick_labels, ylim=ax.get_ylim())
+    ax.set_yticks(ax.get_yticks())
+    ax.set_yticklabels(new_ytick_labels)
 
     
     # af_cutoff=artefact_cutoff(data[!,:fs], af_thresh)

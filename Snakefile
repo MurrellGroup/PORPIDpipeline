@@ -2,7 +2,7 @@ import subprocess, sys
 configfile: "config.yaml"
 DATASETS = [d for d in config for s in config[d]]
 SAMPLES = [s for d in config for s in config[d]]
-VERSION = "1.0"
+VERSION = "1.10.5"
 COMMIT = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD']).strip().decode()
 
 sys.stderr.write("Running PorpidPostproc\n")
