@@ -92,7 +92,7 @@ rule porpid:
     script:
         "scripts/porpid.jl"
         
-rule bottle1:
+rule porpid_wait:
     input:
         files = bottle1_input
     output:
@@ -157,7 +157,7 @@ rule postproc:
     script:
         "scripts/postproc.jl"
         
-rule bottle2:
+rule postproc_wait:
     input:
         files = bottle2_input
     output:
