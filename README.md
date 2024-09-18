@@ -36,19 +36,32 @@ to makesure you have version 1.10.5 as your default, go here:
 [https://github.com/JuliaLang/juliaup]
 
 Once Julia is installed, make sure you can enter the julia REPL from 
-the command line and check the version number, 
-from a terminal you would do:
+the command line and check the version number by logging out and in again and
+then from your new terminal session:
 
 ```bash
+juliaup status
 julia --version
 ```
+
+If the version number is not 1.10.5 then you need to use `juliaup` to install
+that version and make it the default. 
+
+```bash
+juliaup add 1.10.5
+juliaup default 1.10.5
+```
+
+for further details concerning `juliaup` go here:
+
+[https://github.com/JuliaLang/juliaup?tab=readme-ov-file#using-juliaup]
 
 ### cloning the PORPIDpipeline repository
 
 Now that the dependencies are setup we clone the PORPIDpipeline repository
 
 ```bash
-git clone https://github.com/MurrellGroup/PORPIDpipeline.git
+git clone -b artefactfilter https://github.com/MurrellGroup/PORPIDpipeline.git
 ```
 
 ### setting up the Julia package environment
@@ -137,7 +150,9 @@ nohup snakemake -j{n}&
 cat nohup.out
 ```
 
-For more info on Snakemake, see https://snakemake.readthedocs.io/en/stable/
+For more info on Snakemake, see:
+
+[https://snakemake.readthedocs.io/en/stable/]
 
 ## Conda setup
 
