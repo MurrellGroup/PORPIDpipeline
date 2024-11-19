@@ -32,12 +32,12 @@ def bottle2_input(wildcards):
 
 # PorpidPostproc parameters
 # demux
-chunk_size = 10000   # default 10000
+chunk_size = 100000   # default 10000
 error_rate = 0.01    # default 0.01
 min_length = 2100    # default 2100
 max_length = 4300    # default 4300
 #porpid
-fs_thresh = 1        # default 1 (must be 1 for artefact filter to work)
+fs_thresh = 5        # default 1 (must be 1 for artefact filter to work)
 lda_thresh = 0.995   # default 0.995
 #contam
 cluster_thresh = 0.015   # default 0.015
@@ -46,7 +46,7 @@ dist_thresh = 0.015      # default 0.015
 # change to "off" to switch off contam filter
 contam_toggle = "on"   # default "on" 
 #postproc
-af_thresh = 0.15  # default 0.15 (drops smallest 15% of CCS reads)
+af_thresh = 0.0  # default 0.15 (drops smallest 15% of CCS reads)
 agreement_thresh = 0.7   # default 0.7
 panel_thresh = 50        # default 50
 #tar

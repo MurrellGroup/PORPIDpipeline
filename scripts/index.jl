@@ -42,8 +42,8 @@ for sample in sort(snakemake.params["SAMPLES"])
     r_seqs, r_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.fasta") #rejected sequences
     f_seqs, f_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta") #final sequences
     sample_reject_df = CSV.read("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.csv", DataFrame) #reject split
-    r_art_seq_number = sample_reject_df[1,"count"]
-    r_ma_seq_number = sample_reject_df[2,"count"]
+    r_ma_seq_number = sample_reject_df[1,"count"]
+    r_art_seq_number = sample_reject_df[2,"count"]
     r_pan_seq_number = sample_reject_df[3,"count"]
     p_seq_number = length(p_seqs)
     r_seq_number = length(r_seqs)
