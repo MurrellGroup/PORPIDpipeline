@@ -107,6 +107,12 @@ println("$(template_name): labelling $(minag_count) reads as minag-reject")
 
 # now rename possible artefacts
 af_thresh = snakemake.params["af_thresh"]
+
+# allow for an af override
+if "af_override" in keys(config)
+    af_thresh = config["af_override"]
+end
+
 ccs=tag_df[tag_df[!,:tags].=="likely_real",:fs]
 af_cutoff=artefact_cutoff(ccs,af_thresh)
 art_count=0

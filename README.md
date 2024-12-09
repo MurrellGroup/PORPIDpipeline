@@ -4,7 +4,7 @@ by Alec Pankow and Ben Murrell, now maintained by Hugh Murrell
 
 now upgraded to Julia version 1.10.5
 
-## branch master 
+## Branch: artefactfilter
 
 ## Quick start
 
@@ -80,11 +80,49 @@ This will activate, install, and precompile the `julia` environment specified by
 above is not strictly needed but is useful if there are issues with installing
 the `julia` packages listed in `Project.toml`
 
-### Configuration
+### Workflow
 
-To configure the PORPIDpipeline workflow, first edit the demo `config.yaml` file to reflect
-your library construction. 
-It should follow the same format shown in the *demo* example below.
+The graph below summarizes the overall organization of the workflow. 
+Each node in the graph is a *rule* in the The [Snakefile](Snakefile).
+
+![rulegraph](rulegraph.png)
+
+Snakemake makes use of a `Snakefile` and a `config` file to specify 
+input and output files for each rule and to set parameters for each 
+rule in the workflow. Global parameters that can be changed by the 
+user editing the `Snakefile` are as follows:
+
+```
+# PORPIDpipeline parameters
+# demux
+chunk_size = 100000      # default 10000
+error_rate = 0.01        # default 0.01
+min_length = 2100        # default 2100
+max_length = 4300        # default 4300
+#porpid
+fs_thresh = 1            # default 1 (must be 1 for artefact filter to work)
+lda_thresh = 0.995       # default 0.995
+#consensus
+agreement_thresh = 0.7   # default 0.7
+af_thresh = 0.15         # default 0.15 (drops smallest 15% of CCS reads)
+#contam
+cluster_thresh = 0.015   # default 0.015
+proportion_thresh = 0.2  # default 0.2
+dist_thresh = 0.015      # default 0.015
+contam_toggle = "on"     # default "on", use "off" to disable
+#postproc
+panel_thresh = 50        # default 50
+#tar
+degap = "true"           # default "true", use "false" to disable
+```
+
+### Sample configuration
+
+Parameters for each sample are provided in the `config.yaml` file. This file
+should reflect your library construction, amplicon identity and any override
+parameter settings. 
+
+It should follow the same format shown in the **demo** example below.
 
 ```yaml
 demo:
@@ -96,6 +134,7 @@ demo:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAcactcaNNNNNNNNGTCATTGGTCTTAAAGGTACCTG
     sec_str_primer: TAGGCATCTCCT
     panel: "panels/HIV1_COM_2017_5970-8994_DNA_stripped.fasta"
+    af_override: 0.4
   donor_3_REN:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAggtagcNNNNNNNNGTCATTGGTCTTAAAGGTACCTG
     sec_str_primer: TAGGCATCTCCT
@@ -133,6 +172,9 @@ the alignment to your region of interest.
 gzipped CCS .fastq files should be placed in the `raw-reads/` subdirectory and named 
 according to the the dataset name used in the `config.yaml` file, ie, `demo.fastq.gz`
 for the *demo* dataset.
+
+We also use the `config` file to allow an override of the default artefact 
+filter threshold for a particular sample, see `donor_2_REN` above.
 
 ### Preview and Execution
 
@@ -346,12 +388,6 @@ We have not attempted this yet, and it would probably require writing a
 
 ## Documentation
 
-### Workflow
-
-The graph below summarizes the overall organization of the workflow. 
-Each node in the graph is a *rule* in the The [Snakefile](Snakefile).
-
-![rulegraph](rulegraph.png)
 
 
 An introduction to PacBio sequencing and an explanation for each *PORPIDpipeline* rule 

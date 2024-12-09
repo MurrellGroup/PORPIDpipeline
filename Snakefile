@@ -30,29 +30,27 @@ def bottle2_input(wildcards):
         sample = SAMPLES
     )
 
-# PorpidPostproc parameters
+# PORPIDpipeline parameters
 # demux
-chunk_size = 100000   # default 10000
-error_rate = 0.01    # default 0.01
-min_length = 2100    # default 2100
-max_length = 4300    # default 4300
+chunk_size = 100000      # default 10000
+error_rate = 0.01        # default 0.01
+min_length = 2100        # default 2100
+max_length = 4300        # default 4300
 #porpid
-fs_thresh = 5        # default 1 (must be 1 for artefact filter to work)
-lda_thresh = 0.995   # default 0.995
+fs_thresh = 1            # default 1 (must be 1 for artefact filter to work)
+lda_thresh = 0.995       # default 0.995
+#consensus
+agreement_thresh = 0.7   # default 0.7
+af_thresh = 0.15         # default 0.15 (drops smallest 15% of CCS reads)
 #contam
 cluster_thresh = 0.015   # default 0.015
 proportion_thresh = 0.2  # default 0.2
 dist_thresh = 0.015      # default 0.015
-# change to "off" to switch off contam filter
-contam_toggle = "on"   # default "on" 
+contam_toggle = "on"     # default "on", use "off" to disable
 #postproc
-af_thresh = 0.0  # default 0.15 (drops smallest 15% of CCS reads)
-agreement_thresh = 0.7   # default 0.7
 panel_thresh = 50        # default 50
 #tar
-# change this to "false" if you dont want 
-# degapped postproc sequences
-degap = "true"           # default "true"
+degap = "true"           # default "true", use "false" to disable
 
 rule all:
     input:
@@ -149,6 +147,7 @@ rule postproc:
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.csv",
         report("postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png", category = "postproc", caption = "report-rst/di_nuc_freq.rst")
     params:
+        config = lambda wc: config[wc.dataset][wc.sample],
         panel = lambda wc: config[wc.dataset][wc.sample]["panel"],
         af_thresh = af_thresh,
         fs_thresh = fs_thresh,

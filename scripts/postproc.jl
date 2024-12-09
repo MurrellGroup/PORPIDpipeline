@@ -21,6 +21,10 @@ af_thresh = snakemake.params["af_thresh"]
 agreement_thresh = snakemake.params["agreement_thresh"]
 panel_thresh = snakemake.params["panel_thresh"]
 
+config = snakemake.params["config"]
+if "af_override" in keys(config)
+    af_thresh = config["af_override"]
+end
 
 #env_seqs = read_fasta("panels/env_column_stripped_panel.fasta")
 #env_profile = seqs2profile(uppercase.(env_seqs))
@@ -56,6 +60,8 @@ panel_file = snakemake.params["panel"]
 # end
 
 ali_seqs,seqnames,af_cutoff = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh, af_thresh=af_thresh)
+
+@show af_thresh, af_cutoff
 
 sp_selected = @linq tag_df |> where(:Sample .== sample)
 sp_selected = @linq sp_selected |> where(:tags .!= "BPB-rejects")
