@@ -148,6 +148,8 @@ demo:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAcactcaNNNNNNNNGTATGTCATTGACAGTCCAGC
     sec_str_primer: TTGACTAGCGGAGGCTAGAAGGAGA
     panel: "panels/HIV1_COM_2017_787-3300_DNA_stripped.fasta"
+    af_override: 0.0
+    fs_override: 14
   donor_3_GP:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAggtagcNNNNNNNNGTATGTCATTGACAGTCCAGC
     sec_str_primer: TTGACTAGCGGAGGCTAGAAGGAGA
@@ -174,8 +176,9 @@ gzipped CCS .fastq files should be placed in the `raw-reads/` subdirectory and n
 according to the the dataset name used in the `config.yaml` file, ie, `demo.fastq.gz`
 for the *demo* dataset.
 
-We also use the `config` file to allow an override of the default artefact 
-filter threshold for a particular sample, see `donor_2_REN` above.
+We also use the `config` file to allow an **override** for a particular sample, 
+of the default artefact filter threshold, and/or, the default family size filter. 
+See the demo config file above.
 
 ### Preview and Execution
 
