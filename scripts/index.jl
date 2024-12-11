@@ -36,8 +36,14 @@ demux_df = CSV.read("porpid/$(dataset)/demux_report.csv", DataFrame)
 demux_tbl = format_tbl(demux_df)
 
 ####### make a table of ALL read counts
-seq_counts_df = DataFrame(Sample = [], Porpid_Seqs = [], Rej_Artefact = [], Rej_Min_Ag = [], Rej_Panel = [], Rej_Seqs = [], Final_Seqs = [])
+cfg = snakemake.params["config"]
+fs_thresh = snakemake.params["fs_thresh"]
+af_thresh = snakemake.params["af_thresh"]
+seq_counts_df = DataFrame(Sample = [], fs_used = [], af_used = [], Porpid_Seqs = [],
+            Rej_Artefact = [], Rej_Min_Ag = [], Rej_Panel = [], Rej_Seqs = [], Final_Seqs = [])
 for sample in sort(snakemake.params["SAMPLES"])
+    "fs_override" in keys(cfg[sample]) ? fs_used = cfg[sample]["fs_override"] : fs_used = fs_thresh
+    "af_override" in keys(cfg[sample]) ? af_used = cfg[sample]["af_override"] : af_used = af_thresh
     p_seqs, p_seq_names = read_fasta("porpid/$(dataset)/consensus/$(sample).fasta")    #porpid sequences
     r_seqs, r_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.fasta") #rejected sequences
     f_seqs, f_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta") #final sequences
@@ -48,7 +54,8 @@ for sample in sort(snakemake.params["SAMPLES"])
     p_seq_number = length(p_seqs)
     r_seq_number = length(r_seqs)
     f_seq_number = length(f_seqs)
-    push!(seq_counts_df, [sample, p_seq_number, r_art_seq_number, r_ma_seq_number, r_pan_seq_number, r_seq_number, f_seq_number])
+    
+    push!(seq_counts_df, [sample, fs_used, af_used, p_seq_number, r_art_seq_number, r_ma_seq_number, r_pan_seq_number, r_seq_number, f_seq_number])
 end
 seq_counts_df[!, :Porpid_Seqs] = convert.(Int, seq_counts_df[:, :Porpid_Seqs])
 seq_counts_df[!, :Rej_Min_Ag] = convert.(Int, seq_counts_df[:, :Rej_Min_Ag])
@@ -61,7 +68,7 @@ seq_counts_df[!, :Final_Seqs] = convert.(Int, seq_counts_df[:, :Final_Seqs])
 joined_df = innerjoin(seq_counts_df, demux_df, on = :Sample)
 joined_df = rename!(joined_df,:Count => :Read_Count) #change Counts column name to Read_Count
 joined_df[!, :Reads_per_Porpid_Seq] = joined_df[!, :Read_Count] ./ joined_df[!, :Porpid_Seqs]
-joined_df = select(joined_df, [:Sample, :Reads_per_Porpid_Seq], :Porpid_Seqs, :Rej_Min_Ag, :Rej_Artefact, :Rej_Panel, :Rej_Seqs, :Final_Seqs)
+joined_df = select(joined_df, [:Sample, :fs_used, :af_used, :Reads_per_Porpid_Seq], :Porpid_Seqs, :Rej_Min_Ag, :Rej_Artefact, :Rej_Panel, :Rej_Seqs, :Final_Seqs)
 joined_df_tbl = format_tbl(joined_df)
 CSV.write(snakemake.output[2], joined_df)
 

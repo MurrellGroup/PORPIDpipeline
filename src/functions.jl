@@ -509,7 +509,7 @@ function family_size_umi_len_stripplot(data;
     # af_cutoff=artefact_cutoff(data[!,:fs], af_thresh)
     axvline([af_cutoff-0.5],c="red",label="artefact threshold")
     
-    aftp=Int(af_thresh*100)
+    aftp=af_thresh*100
     labels = xlabel("UMI family size"), ylabel("UMI length")
     #  with $(aftp)% artefact threshold (fs=$(af_cutoff))
     
@@ -570,7 +570,7 @@ function family_size_stripplot(data;
     axvline([af_cutoff-0.5],c="red")
     
     
-    aftp=Int(af_thresh*100)
+    aftp=af_thresh*100
     
     # Shrink current axis by 20%
     box = ax.get_position()

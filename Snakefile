@@ -192,6 +192,7 @@ rule index:
         VERSION = VERSION,
         COMMIT = COMMIT,
         SAMPLES = SAMPLES,
+        config = lambda wc: config[wc.dataset],
         chunk_size = chunk_size,
         error_rate = error_rate,
         min_length = min_length,

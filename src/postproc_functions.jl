@@ -13,7 +13,7 @@ function H704_init_template_proc(fasta_collection, panel_file,
     f = fasta_collection
     #align consensus
     seqs,seqnames,sizes,agreement_scores = read_HVTN(f)
-    annot_names = seqnames .* " num_CCS=" .* string.(sizes) .* " min_agreement=" .* string.(agreement_scores)
+    annot_names = seqnames .* " fs=" .* string.(sizes) .* " minag=" .* string.(agreement_scores)
     reject_seqs=[]
     reject_names=[]
     

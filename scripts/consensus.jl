@@ -16,7 +16,7 @@ function generateConsensusFromDir(dir, template_name)
     end
     cons_collection = map(ConsensusFromFastq, files)
     seq_collection = [i[1] for i in cons_collection]
-    seqname_collection = [template_name*i[2] for i in cons_collection]
+    seqname_collection = [template_name*"_"*i[2] for i in cons_collection]
     return seq_collection, seqname_collection
 end
 
@@ -26,7 +26,7 @@ function ConsensusFromFastq(file)
     draft2 = refine_ref(draft, seqs)
     final_cons = refine_ref(draft2,seqs)
     alignments, maps, matches, matchContent = getReadMatches(final_cons, seqs, 0)
-    cons_name = split(basename(file),"_")[1]*" num_CCS=$(length(seqs)) min_agreement=$(round(minimum(matches); digits = 2))"
+    cons_name = split(basename(file),"_")[1]*" fs=$(length(seqs)) minag=$(round(minimum(matches); digits = 2))"
     return final_cons, cons_name
 end
 
@@ -102,7 +102,7 @@ for row in eachrow(tag_df)
         global minag_count+=1
     end
 end
-println("$(template_name): labelling $(minag_count) reads as minag-reject")
+println("$(template_name): labelling $(minag_count) families as minag-reject")
 
 
 # now rename possible artefacts
@@ -122,7 +122,7 @@ for row in eachrow(tag_df)
         global art_count+=1
    end
 end
-println("$(template_name): labeling $(art_count) reads with fs under $(af_cutoff) as maybe-artefact")
+println("$(template_name): labelling $(art_count) families with fs under $(af_cutoff) as maybe-artefact")
 
 CSV.write(snakemake.output[2], sort!(tag_df, [:Sample, :tags, :fs], rev = [false, false, true]));
 

@@ -22,6 +22,10 @@ agreement_thresh = snakemake.params["agreement_thresh"]
 panel_thresh = snakemake.params["panel_thresh"]
 
 config = snakemake.params["config"]
+if "fs_override" in keys(config)
+    fs_thresh = config["fs_override"]
+end
+
 if "af_override" in keys(config)
     af_thresh = config["af_override"]
 end
@@ -75,8 +79,9 @@ fig.savefig(snakemake.output[5];
 sp_selected = @linq tag_df |> where(:Sample .== sample)
 sp_artefacts = @linq sp_selected |> where(:tags .== "maybe-artefact")
 sp_minag_rejects = @linq sp_selected |> where(:tags .== "minag-reject")
+sp_fs_rejects = @linq sp_selected |> where(:tags .== "fs<$(fs_thresh)")
 sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
-sp_selected = vcat(sp_artefacts, sp_reals, sp_minag_rejects)
+sp_selected = vcat(sp_artefacts, sp_reals, sp_minag_rejects, sp_fs_rejects)
 fig = family_size_stripplot(sp_selected,fs_thresh=fs_thresh,
         af_thresh=af_thresh,af_cutoff=af_cutoff)
 fig.savefig(snakemake.output[6];

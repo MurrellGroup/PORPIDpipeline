@@ -12,6 +12,12 @@ HypothesisTests, DataFrames, BioSequences, IterTools, CSV, FASTX
 t1 = time()
 config = snakemake.params["config"]
 fs_thresh = snakemake.params["fs_thresh"]
+
+# allow for an fs override
+if "fs_override" in keys(config)
+    fs_thresh = config["fs_override"]
+end
+
 lda_thresh = snakemake.params["lda_thresh"]
 data_dir = snakemake.input[1]
 ID = uppercase(match(r"[a-z]+", config["cDNA_primer"]).match)
