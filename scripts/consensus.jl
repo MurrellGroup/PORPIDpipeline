@@ -16,7 +16,7 @@ function generateConsensusFromDir(dir, template_name)
     end
     cons_collection = map(ConsensusFromFastq, files)
     seq_collection = [i[1] for i in cons_collection]
-    seqname_collection = [template_name*"_"*i[2] for i in cons_collection]
+    seqname_collection = [template_name*i[2] for i in cons_collection]
     return seq_collection, seqname_collection
 end
 

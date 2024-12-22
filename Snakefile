@@ -37,11 +37,11 @@ error_rate = 0.01        # default 0.01
 min_length = 2100        # default 2100
 max_length = 4300        # default 4300
 #porpid
-fs_thresh = 1            # default 1 (must be 1 for artefact filter to work)
+fs_thresh = 5            # default 1 (must be 1 for artefact filter to work)
 lda_thresh = 0.995       # default 0.995
 #consensus
 agreement_thresh = 0.7   # default 0.7
-af_thresh = 0.15         # default 0.15 (drops smallest 15% of CCS reads)
+af_thresh = 0.0          # default 0.15 (drops smallest 15% of CCS reads)
 #contam
 cluster_thresh = 0.015   # default 0.015
 proportion_thresh = 0.2  # default 0.2
