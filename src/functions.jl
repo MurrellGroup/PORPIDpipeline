@@ -731,7 +731,15 @@ function highlighter_figure(fasta_collection; out_path = "figure.png")
     #read in and collapse
     seqnames, ali_seqs = read_fasta_with_names(fasta_collection);
     collapsed_seqs, collapsed_sizes, collapsed_names = variant_collapse(ali_seqs; prefix = "v")
-
+    
+    if length(collapsed_seqs) > 1000
+        @warn "$(fasta_collection) too large for tree draw, sampling 1000 seqs from $(length(collapsed_seqs))"
+        ss = vcat([1],sample(2:length(collapsed_seqs),999,replace=false))
+        collapsed_seqs = collapsed_seqs[ss]
+        collapsed_sizes = collapsed_sizes[ss]
+        collapsed_names = collapsed_names[ss]
+    end
+    
     if length(collapsed_seqs) == 1
         @warn "All sequences in $(split(basename(fasta_collection),".fast")[1]) are identical, so no collapsed tree can be created"
         SVG(out_path, 20cm, 20cm) #blank SVG

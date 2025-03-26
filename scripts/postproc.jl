@@ -65,8 +65,6 @@ panel_file = snakemake.params["panel"]
 
 ali_seqs,seqnames,af_cutoff = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh, af_thresh=af_thresh)
 
-@show af_thresh, af_cutoff
-
 sp_selected = @linq tag_df |> where(:Sample .== sample)
 sp_selected = @linq sp_selected |> where(:tags .!= "BPB-rejects")
 fig = family_size_umi_len_stripplot(sp_selected,fs_thresh=fs_thresh,
