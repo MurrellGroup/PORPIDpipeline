@@ -5,7 +5,7 @@ using CodecZlib: GzipDecompressorStream
 using CodecZlib: GzipCompressorStream
 
 function pp_demux_dict(names, seqs, fwd_primers, rev_primers, reject_trim_writer;
-    verbose = true, phreds = nothing, tol_one_error = true, demux_dir = "demux")
+    verbose = false, phreds = nothing, tol_one_error = true, demux_dir = "demux")
     if rev_primers == nothing
         fwd_matches = fast_primer_match(seqs,fwd_primers,tol_one_error=tol_one_error)
         rev_comp_bool = fwd_matches .< 0
@@ -22,7 +22,7 @@ function pp_demux_dict(names, seqs, fwd_primers, rev_primers, reject_trim_writer
     sorted_pairs = sort([(k,pair_counts[k]) for k in keys(pair_counts)])
     if verbose
         for s in sorted_pairs
-            println(s[1], " => ", s[2])
+            @show s
         end
     end
 
@@ -98,11 +98,14 @@ function unique_not_substr(a)
 end
 
 function iterative_primer_match(seqs,full_primers,
-  window::Int,slide_by::Int;tol_one_error=true)
+  window::Int,slide_by::Int;tol_one_error=true,verbose=false)
     if(slide_by + window - 1 > minimum(length.(full_primers)))
         @warn("Matching window extends beyond shortest primer. This is ok, but check that you aren't matching something too short.",maxlog=1)
     end
     primers = [p[1:min(window,minimum(length.(full_primers)))] for p in full_primers]
+    if verbose
+        @show full_primers, primers
+    end
     filter = fast_primer_match(seqs,primers,tol_one_error=tol_one_error);
     for i in 2:slide_by
         unresolved = filter .== 0
@@ -114,7 +117,7 @@ end
 
 
 function sliding_demux_dict(names,seqs,fwd_primers,window::Int,slide_by::Int,reject_fwd_writer;
-        verbose = true, phreds = nothing, tol_one_error = true, demux_dir = "demux")
+        verbose = false, phreds = nothing, tol_one_error = true, demux_dir = "demux")
     fwd_matches = iterative_primer_match(seqs,fwd_primers,window,slide_by,tol_one_error=tol_one_error)
     rev_comp_bool = fwd_matches .< 0
     keepers = abs.(fwd_matches) .> 0
@@ -124,7 +127,7 @@ function sliding_demux_dict(names,seqs,fwd_primers,window::Int,slide_by::Int,rej
     sorted_pairs = sort([(k,pair_counts[k]) for k in keys(pair_counts)])
     if verbose
         for s in sorted_pairs
-            println(s[1], " => ", s[2])
+            @show s
         end
     end
     if phreds == nothing
@@ -185,7 +188,7 @@ function longest_conserved_5p(seqs)
     return seqs[1]
 end
 
-function chunked_filter_apply(in_path, out_path, func::Function; chunk_size=10000, f_kwargs = [], verbose = false)
+function chunked_filter_apply(in_path, out_path, func::Function; chunk_size=10000, f_kwargs = [])
     if endswith(in_path, ".gz")
         reader = FASTQ.Reader(GzipDecompressorStream(open(in_path)))
         reject_qual_writer = FASTQ.Writer(GzipCompressorStream(open(out_path*"/REJECTS_DEMUX_QUAL.fastq.gz","w")))
@@ -259,7 +262,7 @@ function chunked_quality_demux(chunk, chunk_size, seqs, phreds, names,
     max_length = 1000000,
     label_prefix = "seq",
     error_out = true,
-    verbose = true)
+    verbose = false)
     
     # println("julia 1.7")
 
@@ -269,7 +272,7 @@ function chunked_quality_demux(chunk, chunk_size, seqs, phreds, names,
 
     # quality filter
     if verbose
-        println("filtering chunk on mean phred scores ...")
+        println("filtering chunk of size $(total_reads) on mean phred scores ...")
     end
     lengths = length.(seqs)
     mean_errors = [mean(phred_to_p.(phred)) for phred in phreds]
@@ -281,6 +284,11 @@ function chunked_quality_demux(chunk, chunk_size, seqs, phreds, names,
     short_reads = sum( (short_inds) .& (good_inds) )
     long_reads = sum( (long_inds) .& (good_inds) )
     inds = [1:length(seqs);][(lengths .< max_length) .& (lengths .> min_length) .& (mean_errors .< error_rate)]
+    good_reads = length( inds )
+    
+    if verbose
+        @show good_reads, bad_reads, short_reads, long_reads
+    end
     
     # rename records using increasing seq no and annotaion
     if error_out == true
@@ -326,21 +334,33 @@ function chunked_quality_demux(chunk, chunk_size, seqs, phreds, names,
     rev_adapters = [v["cDNA_primer"] for (k,v) in samples]
     rev_adapter = longest_conserved_5p(rev_adapters)
     rev_adapter = String(split(rev_adapter,r"[a-z]")[1]) #if all contain sample ID keep sample ID
+    if verbose
+        @show rev_adapter
+    end
     #sliding window demultiplex on forward primers
     fwd_demux_dic = sliding_demux_dict(names, seqs,
                                        unique_fwd_ends,
                                        12,
                                        13, #must not extend into the sampleID
                                        reject_fwd_writer,
-                                       verbose=false,
+                                       verbose=verbose,
                                        phreds = phreds,
                                        demux_dir = demux_dir)
     #iterate by each forward primer group
+    if verbose
+        @show keys(fwd_demux_dic)
+        @show unique_fwd_ends
+        @show unique(fwd_end_group_arr)
+    end
     for j in unique(fwd_end_group_arr)
         #define templates
         template_names = [k for (k,v) in samples][fwd_end_group_arr .== j]
         templates = [samples[n]["cDNA_primer"] for n in template_names]
         sampleIDs = uppercase.([m.match for m in match.(r"[a-z]+", templates)])
+        if verbose
+            @show sampleIDs
+        end
+
         IDind2name = Dict(zip(collect(1:length(sampleIDs)),template_names));
 
         #retrieve from demux_dic
@@ -357,7 +377,7 @@ function chunked_quality_demux(chunk, chunk_size, seqs, phreds, names,
         end
 
         #match to reverse adapter
-        rev_matches = iterative_primer_match(seqs_fwd, [rev_adapter], 12, 13, tol_one_error=true);
+        rev_matches = iterative_primer_match(seqs_fwd, [rev_adapter], 12, 13, tol_one_error=true, verbose=verbose);
         rev_keepers = rev_matches .< 0
         
         # save the reverse primer rejects as a fastq file
@@ -396,7 +416,7 @@ function chunked_quality_demux(chunk, chunk_size, seqs, phreds, names,
                                            sampleIDs,
                                            nothing,
                                            reject_trim_writer,
-                                           verbose=false,
+                                           verbose=verbose,
                                            phreds=[s[2] for s in trimmed],
                                            tol_one_error=false,
                                            demux_dir = demux_dir)

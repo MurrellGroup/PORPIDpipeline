@@ -17,10 +17,15 @@ t1 = time()
 SAMPLE_CONFIGS = snakemake.params["config"]
 mkdir(snakemake.output[1])
 
+verbose = false
+if snakemake.params["verbose"] == "true"
+    verbose = true
+end
+
 f_kwargs = [
     :demux_dir => snakemake.output[1],
     :samples => SAMPLE_CONFIGS,
-    :verbose => false,
+    :verbose => verbose,
     :error_rate => snakemake.params["error_rate"],
     :min_length => snakemake.params["min_length"],
     :max_length => snakemake.params["max_length"],
@@ -32,7 +37,7 @@ println("performing chunked quality filtering and demux on $(snakemake.input[1])
 chunk_size = snakemake.params["chunk_size"]
 
 reads = chunked_filter_apply(snakemake.input[1], snakemake.output[1], chunked_quality_demux;
-    chunk_size=chunk_size, f_kwargs, verbose = false)
+    chunk_size=chunk_size, f_kwargs)
 
 # create empty fastq files for those samples with no reads
 # this does not work, too much trouble with downstream scripts

@@ -32,10 +32,11 @@ def bottle2_input(wildcards):
 
 # PORPIDpipeline parameters
 # demux
-chunk_size = 100000      # default 10000
+chunk_size = 100000      # default 100000
 error_rate = 0.01        # default 0.01
 min_length = 2100        # default 2100
 max_length = 4300        # default 4300
+verbose = "false"        # default "false", use "true" to debug demux
 #porpid
 fs_thresh = 1            # default 1 (or use 5 if af_thresh is 0)
 lda_thresh = 0.995       # default 0.995
@@ -72,6 +73,7 @@ rule demux:
         error_rate = error_rate,
         min_length = min_length,
         max_length = max_length,
+        verbose = verbose,
         config = lambda wc: config[wc.dataset]
     script:
         "scripts/demux.jl"
