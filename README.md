@@ -4,7 +4,7 @@ by Alec Pankow and Ben Murrell, now maintained by Hugh Murrell
 
 now upgraded to Julia version 1.10.5
 
-## Branch: artefactfilter
+## Branch: master (including the new artefactfilter)
 
 ## Quick start
 
@@ -61,7 +61,7 @@ for further details concerning `juliaup` go here:
 Now that the dependencies are setup we clone the PORPIDpipeline repository
 
 ```bash
-git clone -b artefactfilter https://github.com/MurrellGroup/PORPIDpipeline.git
+git clone https://github.com/MurrellGroup/PORPIDpipeline.git
 ```
 
 ### setting up the Julia package environment
@@ -95,16 +95,18 @@ user editing the `Snakefile` are as follows:
 ```
 # PORPIDpipeline parameters
 # demux
-chunk_size = 100000      # default 10000
+chunk_size = 100000      # default 100000
 error_rate = 0.01        # default 0.01
 min_length = 2100        # default 2100
 max_length = 4300        # default 4300
+max_reads = 100000       # default 100000 reads per sample,
+verbose = "false"        # default "false", use "true" to debug demux
 #porpid
-fs_thresh = 1            # default 1 (must be 1 for artefact filter to work)
+fs_thresh = 1            # default 1 (or use 5 if af_thresh is 0)
 lda_thresh = 0.995       # default 0.995
 #consensus
 agreement_thresh = 0.7   # default 0.7
-af_thresh = 0.15         # default 0.15 (drops smallest 15% of CCS reads)
+af_thresh = 0.35         # default 0.35 (drops smallest 35% of CCS reads)
 #contam
 cluster_thresh = 0.015   # default 0.015
 proportion_thresh = 0.2  # default 0.2
@@ -115,6 +117,14 @@ panel_thresh = 50        # default 50
 #tar
 degap = "true"           # default "true", use "false" to disable
 ```
+
+Note that with the advent of PacBio Revio sequencer, the number of reads
+per sample has grown to outstrip memory available on standard CPUs. 
+To enable a trouble free pipeline run, we now allow the user to specify
+the maximum number of reads per sample using the `max_reads` parameter above.
+Samples with reads exceeding this limit are then randomly sub-sampled to
+reduce the number of reads accordingly.
+
 
 ### Sample configuration
 

@@ -33,7 +33,7 @@ function write_fasta_with_names_and_descripts(filename::String, seqs; names = St
     end
     stream = open(FASTA.Writer, filename)
     for (name, seq, descript) in zip(names, seqs, descripts)
-        write(stream, FASTA.Record(name, descript, seq))
+        write(stream, FASTA.Record("$(name) $(descript)", seq))
     end
     close(stream)
 end
@@ -55,6 +55,25 @@ if degap_flag == "true"
         names, seqs = read_fasta_with_names(infile)
         names, descripts, seqs = read_fasta_with_names_and_descriptions(infile)
         write_fasta_with_names_and_descripts(outfile, degap.(seqs), names = names, descripts = descripts )
+    end
+    println()
+end
+
+collapse_flag = snakemake.params["collapse"]
+println( "collapse flag = $(collapse_flag)")
+samples = snakemake.params["samples"]
+if collapse_flag == "true"
+    println("generating collapsed postproc sequences...")
+    run(`mkdir -p $(postproc_dir)/collapsed_fasta/`)
+    for sample in samples
+        infile = "$(postproc_dir)/$(sample)/$(sample).fasta"
+        outfile = "$(postproc_dir)/collapsed_fasta/$(sample)-collapsed.fasta"
+        print(".")
+        names, seqs = read_fasta_with_names(infile)
+        names, descripts, seqs = read_fasta_with_names_and_descriptions(infile)
+        col_seqs, col_sizes, col_names = variant_collapse(seqs,
+            prefix = "$(sample)_v")
+        write_fasta(outfile, col_seqs, names = col_names)
     end
     println()
 end

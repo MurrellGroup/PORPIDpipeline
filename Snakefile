@@ -36,9 +36,11 @@ chunk_size = 100000      # default 100000
 error_rate = 0.01        # default 0.01
 min_length = 2100        # default 2100
 max_length = 4300        # default 4300
+max_reads = 100000       # default 100000 reads per sample,
+                         # use something large for no downsampling
 verbose = "false"        # default "false", use "true" to debug demux
 #porpid
-fs_thresh = 1            # default 1 (or use 5 if af_thresh is 0)
+fs_thresh = 1            # default 1 (or 5 if af_thresh is 0)
 lda_thresh = 0.995       # default 0.995
 #consensus
 agreement_thresh = 0.7   # default 0.7
@@ -52,6 +54,7 @@ contam_toggle = "on"     # default "on", use "off" to disable
 panel_thresh = 50        # default 50
 #tar
 degap = "true"           # default "true", use "false" to disable
+collapse = "true"        # default "true", use "false" to disable
 
 rule all:
     input:
@@ -73,6 +76,7 @@ rule demux:
         error_rate = error_rate,
         min_length = min_length,
         max_length = max_length,
+        max_reads = max_reads,
         verbose = verbose,
         config = lambda wc: config[wc.dataset]
     script:
@@ -82,7 +86,7 @@ rule porpid:
     input:
         "porpid/{dataset}/demux"
     output:
-        directory("porpid/{dataset}/porpid/{sample}.fastq"),
+        directory("porpid/{dataset}/porpid/{sample}.fastq.gz"),
         "porpid/{dataset}/tags/{sample}.csv"
         # directory("porpid/{dataset}/porpid/{sample}.fastq/{sample}")
     params:
@@ -102,7 +106,7 @@ rule porpid_wait:
 
 rule consensus:
     input:
-        "porpid/{dataset}/porpid/{sample}.fastq",
+        "porpid/{dataset}/porpid/{sample}.fastq.gz",
         "porpid/{dataset}/tags/{sample}.csv",
         "porpid/{dataset}/bottle1_report.csv"
     output:
@@ -136,7 +140,7 @@ rule postproc:
     input:
         "porpid/{dataset}/contam_passed",
         "porpid/{dataset}/tags_filtered/{sample}.csv",
-        "porpid/{dataset}/porpid/{sample}.fastq"
+        "porpid/{dataset}/porpid/{sample}.fastq.gz"
     output:
         report("postproc/{dataset}/{sample}/{sample}.fasta.mds.png", category = "postproc", caption = "report-rst/mds.rst"),
         "postproc/{dataset}/{sample}/{sample}.fasta.apobec.csv",
@@ -199,6 +203,7 @@ rule index:
         error_rate = error_rate,
         min_length = min_length,
         max_length = max_length,
+        max_reads = max_reads,
         proportion_thresh =proportion_thresh,
         cluster_thresh = cluster_thresh,
         dist_thresh = dist_thresh,
@@ -222,6 +227,7 @@ rule tar:
         "postproc/{dataset}-postproc.tar.gz"
     params:
         degap = degap,
+        collapse = collapse,
         datasets = DATASETS,
         samples = SAMPLES
     script:

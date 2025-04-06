@@ -213,7 +213,7 @@ function chunked_filter_apply(in_path, out_path, func::Function; chunk_size=1000
     while !eof(reader)
         read!(reader, record)
         push!(seqs, FASTQ.sequence(String, record))
-        push!(phreds, FASTQ.quality(record, :sanger))
+        push!(phreds, collect(FASTQ.quality_scores(record, :sanger)))  # quality changed to quality_scores
         push!(names, FASTQ.identifier(record))
         i += 1
         if i == chunk_size
@@ -430,11 +430,18 @@ function chunked_quality_demux(chunk, chunk_size, seqs, phreds, names,
                     println(IDind2name[i]," => ",length(split_donor_dic[i]))
                 end
                 template = template_names[i]
-                write_fastq(demux_dir*"/"*template*".fastq",
-                            [i[1] for i in split_donor_dic[i]],
-                            [i[2] for i in split_donor_dic[i]];
-                            names = seq_names_both[[i[3] for i in split_donor_dic[i]]],
-                            append=true)
+ #                write_fastq(demux_dir*"/"*template*".fastq",
+ #                            [i[1] for i in split_donor_dic[i]],
+ #                            [i[2] for i in split_donor_dic[i]];
+ #                            names = seq_names_both[[i[3] for i in split_donor_dic[i]]],
+ #                            append=true)
+                stream = FASTQ.Writer(GzipCompressorStream(open(demux_dir*"/"*template*".fastq.gz", append=true)))
+                for (s, q, n) in zip([i[1] for i in split_donor_dic[i]],
+                                     [i[2] for i in split_donor_dic[i]],
+                                     seq_names_both[[i[3] for i in split_donor_dic[i]]])
+                    write(stream, FASTQ.Record(n, s, q))
+                end
+                close(stream)
                 demuxed_reads += length(split_donor_dic[i])
             else
                 if verbose

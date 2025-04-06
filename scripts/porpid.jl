@@ -26,7 +26,7 @@ umi_ix = findfirst(r"N+", config["cDNA_primer"])
 template_suffix = replace(config["cDNA_primer"][umi_ix[1]:end],
     "N" => "n")*"*"
 
-filtered_data_file = snakemake.wildcards["sample"]*".fastq"
+filtered_data_file = snakemake.wildcards["sample"]*".fastq.gz"
 templates = Dict()
 templates[snakemake.wildcards["sample"]] = ID*template_suffix #fix
 
@@ -66,7 +66,7 @@ end
 extract_tags_from_file(cfg.files[1],
     cfg,
     my_output_func,
-    print_every=5000,
+    print_every=10000,
     print_callback=say_print_func)
 directories = collect(keys(dir_dict))
 

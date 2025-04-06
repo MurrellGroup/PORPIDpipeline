@@ -33,6 +33,8 @@ qual_df = CSV.read("porpid/$(dataset)/quality_report.csv", DataFrame)
 qual_tbl = format_tbl(qual_df)
 
 demux_df = CSV.read("porpid/$(dataset)/demux_report.csv", DataFrame)
+# remove trailing .gz from sample names
+# demux_df[:,"Sample"] = (x->replace(x,".gz"=>"")).(demux_df[:,"Sample"])
 demux_tbl = format_tbl(demux_df)
 
 ####### make a table of ALL read counts
@@ -72,7 +74,6 @@ joined_df = select(joined_df, [:Sample, :fs_used, :af_used, :Reads_per_Porpid_Se
 joined_df_tbl = format_tbl(joined_df)
 CSV.write(snakemake.output[2], joined_df)
 
-
 contam_df = CSV.read("porpid/$(dataset)/contam_report.csv", DataFrame)
 # contam_df = contam_df[contam_df[:,:discarded],:]
 contam_df = filter(row -> row.discarded == "true", contam_df)
@@ -101,6 +102,7 @@ reject_df = CSV.read("porpid/$(dataset)/reject_report.csv", DataFrame)
 reject_tbl = format_tbl(reject_df);
 
 demux_dict = Dict(Pair.(demux_df.Sample, demux_df.Count))
+sampled_dict = Dict(Pair.(demux_df.Sample, demux_df.Sampled))
 
 # get parameters for parameter reporting
 
@@ -150,6 +152,7 @@ html_str = html_str_hdr * """
               <li> error_rate = $(snakemake.params["error_rate"]) </li>
               <li> min_length = $(snakemake.params["min_length"]) </li>
               <li> max_length = $(snakemake.params["max_length"]) </li>
+              <li> max_reads = $(snakemake.params["max_reads"]) </li>
             </ul>
 """
                      
@@ -196,6 +199,7 @@ html_str = html_str * """
             <tr>
               <th>Sample</th>
               <th style=\"text-align:center\">Count</th>
+              <th style=\"text-align:center\">Sampled</th>
               <th style=\"text-align:left\">LR%</th>
             </tr></thead>
 """;
@@ -210,8 +214,7 @@ for sample in sort(snakemake.params["SAMPLES"])
             success = floor(Int, 100 * qc_bins[r,nc] / sum(qc_bins[:,nc]))
         end
     end
-    
-    global html_str = html_str * "<tr> <td><a href=$(sample)/$(sample)-report.html target=blank> $(sample) </a> </td> <td style=\"text-align:center\"> $(demux_dict[sample]) </td>  <td> $(success)% </td></tr>"
+    global html_str = html_str * "<tr><td><a href=$(sample)/$(sample)-report.html target=blank> $(sample) </a> </td> <td style=\"text-align:center\"> $(demux_dict[sample]) </td> </td> <td style=\"text-align:center\"> $(sampled_dict[sample]) </td><td> $(success)% </td></tr>"
 end
 
 html_str = html_str * """

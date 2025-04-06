@@ -7,6 +7,7 @@ export # functions
     mafft_align,
     family_size_umi_len_stripplot,
     family_size_stripplot,
+    variant_collapse,
     highlighter_figure,
     gettreefromnewick,
     di_nuc_freqs,
