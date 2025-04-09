@@ -55,6 +55,7 @@ panel_thresh = 50        # default 50
 #tar
 degap = "true"           # default "true", use "false" to disable
 collapse = "true"        # default "true", use "false" to disable
+porpid_archive = "full"  # default "full", use "part" for partial archive
 
 rule all:
     input:
@@ -228,6 +229,7 @@ rule tar:
     params:
         degap = degap,
         collapse = collapse,
+        porpid_archive = porpid_archive,
         datasets = DATASETS,
         samples = SAMPLES
     script:
