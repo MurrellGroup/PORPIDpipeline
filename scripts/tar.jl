@@ -3,7 +3,7 @@ Pkg.activate("./")
 Pkg.instantiate()
 Pkg.precompile()
 
-using PORPIDpipeline, NextGenSeqUtils, FASTX
+using PORPIDpipeline, FASTX
 
 # zip porpid and postproc directories for easy download
 
@@ -23,20 +23,24 @@ function read_fasta_with_names_and_descriptions(filename; seqtype=String)
              seqtype[FASTA.sequence(seqtype, r) for r in records]
 end
 
-function write_fasta_with_names_and_descripts(filename::String, seqs; names = String[], descripts = String[])
-    if length(names) > 0 && (length(names) != length(seqs) || length(names) != length(descripts) )
+function write_fasta(filename::String, seqs; names = String[])
+    if length(names) > 0 && (length(names) != length(seqs) )
         error("number of sequences does not match number of names")
     end
     if length(names) == 0
         names = ["seq_$i" for i in 1:length(seqs)]
-        descripts = ["" for i in 1:length(seqs)]
     end
     stream = open(FASTA.Writer, filename)
-    for (name, seq, descript) in zip(names, seqs, descripts)
-        write(stream, FASTA.Record("$(name) $(descript)", seq))
+    for (name, seq) in zip(names, seqs)
+        write(stream, FASTA.Record(name, seq))
     end
     close(stream)
 end
+
+function degap(s::String)
+    return replace(s,"-"=>"")
+end
+
 
 dataset = snakemake.wildcards["dataset"]
 porpid_dir = "porpid/$(dataset)"
@@ -53,9 +57,8 @@ if degap_flag == "true"
         infile = "$(postproc_dir)/$(sample)/$(sample).fasta"
         outfile = "$(postproc_dir)/degapped_fasta/$(sample)-degapped.fasta"
         print(".")
-        names, seqs = read_fasta_with_names(infile)
         names, descripts, seqs = read_fasta_with_names_and_descriptions(infile)
-        write_fasta_with_names_and_descripts(outfile, degap.(seqs), names = names, descripts = descripts )
+        write_fasta(outfile, degap.(seqs), names = descripts)
     end
     println()
     t1f = time()
@@ -73,7 +76,6 @@ if collapse_flag == "true"
         infile = "$(postproc_dir)/$(sample)/$(sample).fasta"
         outfile = "$(postproc_dir)/collapsed_fasta/$(sample)-collapsed.fasta"
         print(".")
-        names, seqs = read_fasta_with_names(infile)
         names, descripts, seqs = read_fasta_with_names_and_descriptions(infile)
         col_seqs, col_sizes, col_names = variant_collapse(seqs,
             prefix = "$(sample)_v")
