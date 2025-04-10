@@ -116,6 +116,8 @@ contam_toggle = "on"     # default "on", use "off" to disable
 panel_thresh = 50        # default 50
 #tar
 degap = "true"           # default "true", use "false" to disable
+collapse = "true"        # default "true", use "false" to disable
+porpid_archive = "full"  # default "full", use "part" for partial archive
 ```
 
 Note that with the advent of PacBio Revio sequencer, the number of reads
@@ -125,6 +127,10 @@ the maximum number of reads per sample using the `max_reads` parameter above.
 Samples with reads exceeding this limit are then randomly sub-sampled to
 reduce the number of reads accordingly.
 
+We also introduce the option of a **partial** archive of the intermediate
+**porpid** directory. This option is made available to ameliorate the 
+inordinately long time it can take to archive and gzip the huge directory
+structures produced when processing PacBio Revio datasets.
 
 ### Sample configuration
 
