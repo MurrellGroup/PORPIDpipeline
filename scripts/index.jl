@@ -4,7 +4,7 @@ Pkg.instantiate()
 Pkg.precompile()
 
 ENV["MPLBACKEND"] = "Agg"
-using Base64, CSV, DataFrames, NextGenSeqUtils, FASTX, PrettyTables
+using PORPIDpipeline, Base64, CSV, DataFrames, FASTX, PrettyTables
 
 function get_image_str(file)
     fig_str = open(file,"r") do io

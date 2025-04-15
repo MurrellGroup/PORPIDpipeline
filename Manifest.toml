@@ -2,7 +2,7 @@
 
 julia_version = "1.10.5"
 manifest_format = "2.0"
-project_hash = "8621ccb5a1c5c20723df16e220588a68758eae2f"
+project_hash = "85aec7790903ef95c9bc6aac649ffb50e8c16532"
 
 [[deps.Accessors]]
 deps = ["CompositionsBase", "ConstructionBase", "Dates", "InverseFunctions", "MacroTools"]
@@ -340,10 +340,10 @@ uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
 version = "0.3.28"
 
 [[deps.HypothesisTests]]
-deps = ["Combinatorics", "Distributions", "LinearAlgebra", "Printf", "Random", "Rmath", "Roots", "Statistics", "StatsAPI", "StatsBase"]
-git-tree-sha1 = "68f07aa5e52f000da44d5160217a04fbb1d86a78"
+deps = ["Combinatorics", "Distributions", "LinearAlgebra", "Printf", "Random", "Roots", "Statistics", "StatsAPI", "StatsBase", "StatsFuns"]
+git-tree-sha1 = "15319d5a767eb386bc4b702d5e025a0be62be293"
 uuid = "09f84164-cd44-5f33-b23f-e6b0d136a0d5"
-version = "0.11.4"
+version = "0.11.5"
 
 [[deps.InlineStrings]]
 git-tree-sha1 = "6a9fde685a7ac1eb3495f8e812c5a7c3711c2d5e"
@@ -512,7 +512,9 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[deps.MolecularEvolution]]
 deps = ["Distributions", "LinearAlgebra", "Requires", "StatsBase"]
-git-tree-sha1 = "04db2b2c02ee2ec5b7824df58c2222debe263ef0"
+git-tree-sha1 = "c86499fc2d23df2f4bfb8c5d7203af22ac91031c"
+repo-rev = "main"
+repo-url = "https://github.com/MurrellGroup/MolecularEvolution.jl.git"
 uuid = "9f975960-e239-4209-8aa0-3d3ad5a82892"
 version = "0.2.7"
 
@@ -532,9 +534,9 @@ version = "1.2.0"
 
 [[deps.NextGenSeqUtils]]
 deps = ["BioSequences", "CodecZlib", "Distances", "Distributions", "FASTX", "Levenshtein", "LinearAlgebra", "MultivariateStats", "PyPlot", "Reexport", "StatsBase"]
-git-tree-sha1 = "41f14879a9cbdb01585d3741b5fdfe0a2e94b068"
-repo-rev = "1.7.1"
-repo-url = "https://github.com/HughMurrell/NextGenSeqUtils.jl.git"
+git-tree-sha1 = "9d911c6abf681bed906938db6388dab81859222e"
+repo-rev = "main"
+repo-url = "https://github.com/MurrellGroup/NextGenSeqUtils.jl.git"
 uuid = "59ec5594-ae11-5d8d-a868-831a7e904d88"
 version = "0.1.2"
 
@@ -561,9 +563,9 @@ version = "1.8.0"
 
 [[deps.PDMats]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
-git-tree-sha1 = "48566789a6d5f6492688279e22445002d171cf76"
+git-tree-sha1 = "0e1340b5d98971513bddaa6bbed470670cebbbfe"
 uuid = "90014a1f-27ba-587c-ab20-58faa44d9150"
-version = "0.11.33"
+version = "0.11.34"
 
 [[deps.PORPID]]
 deps = ["BioSequences", "CodecZlib", "FASTX", "JSON", "Random", "Test"]
@@ -581,9 +583,9 @@ version = "1.6.1"
 
 [[deps.Parsers]]
 deps = ["Dates", "PrecompileTools", "UUIDs"]
-git-tree-sha1 = "8489905bcdbcfac64d1daa51ca07c0d8f0283821"
+git-tree-sha1 = "44f6c1f38f77cafef9450ff93946c53bd9ca16ff"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "2.8.1"
+version = "2.8.2"
 
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
@@ -747,9 +749,9 @@ version = "1.10.0"
 
 [[deps.SpecialFunctions]]
 deps = ["IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
-git-tree-sha1 = "64cca0c26b4f31ba18f13f6c12af7c85f478cfde"
+git-tree-sha1 = "41852b8679f78c8d8961eeadc8f62cef861a52e3"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "2.5.0"
+version = "2.5.1"
 
     [deps.SpecialFunctions.extensions]
     SpecialFunctionsChainRulesCoreExt = "ChainRulesCore"
