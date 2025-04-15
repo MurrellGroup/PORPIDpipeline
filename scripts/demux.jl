@@ -1,9 +1,14 @@
+using Pkg
+Pkg.activate("./")
+Pkg.instantiate()
+Pkg.precompile()
+
 ENV["MPLBACKEND"] = "Agg"
-using PORPIDpipeline, NextGenSeqUtils, StatsBase
+using PORPIDpipeline, StatsBase
 using BioSequences, FASTX
 using DataFrames, CSV
 using CodecZlib: GzipDecompressorStream
-# include("../../src/postproc_functions.jl")
+using CodecZlib: GzipCompressorStream
 
 println("using Julia version: $(VERSION)")
 
@@ -12,10 +17,15 @@ t1 = time()
 SAMPLE_CONFIGS = snakemake.params["config"]
 mkdir(snakemake.output[1])
 
+verbose = false
+if snakemake.params["verbose"] == "true"
+    verbose = true
+end
+
 f_kwargs = [
     :demux_dir => snakemake.output[1],
     :samples => SAMPLE_CONFIGS,
-    :verbose => false,
+    :verbose => verbose,
     :error_rate => snakemake.params["error_rate"],
     :min_length => snakemake.params["min_length"],
     :max_length => snakemake.params["max_length"],
@@ -27,7 +37,7 @@ println("performing chunked quality filtering and demux on $(snakemake.input[1])
 chunk_size = snakemake.params["chunk_size"]
 
 reads = chunked_filter_apply(snakemake.input[1], snakemake.output[1], chunked_quality_demux;
-    chunk_size=chunk_size, f_kwargs, verbose = false)
+    chunk_size=chunk_size, f_kwargs)
 
 # create empty fastq files for those samples with no reads
 # this does not work, too much trouble with downstream scripts
@@ -75,20 +85,74 @@ for path in filepaths
             global no_assigned += 1
         end
       end
+      close(stream)
     end
-    # sample_name = replace(basename(path), ".fastq" => "")
-    sample_name = basename(path)
+    sample_name = replace( replace( basename(path), ".gz" => "" ), ".fastq" => "" )
     println(sample_name," => ",count)
     if occursin("REJECT",path)
         push!(df_reject,[sample_name,count])
     else
-        push!(df_demux,[replace(sample_name,".fastq" => ""),count])
+        push!(df_demux,[sample_name,count])
     end
 end
 println("-------------------------------------")
 println("total demuxed => $(no_assigned)")
 println("total rejected => $(no_rejected)")
-CSV.write("$(snakemake.output[3])", df_demux)
+
+# now do the down sampling
+df_demux_sampled = DataFrame(Sample = [], Count = [], Sampled = [])
+max_reads = snakemake.params["max_reads"]
+if max_reads < 1
+    max_reads = 10000000
+end
+println("downsampling to about $(max_reads) reads")
+global no_lost=0
+global no_retained=0
+for path in filepaths
+    out_path = path[1:end-9]*"_sampled.fastq.gz"
+    if ! occursin("REJECT",path)
+        if endswith(path, ".gz")
+            stream = FASTQ.Reader(GzipDecompressorStream(open(path)))
+            out_stream = FASTQ.Writer(GzipCompressorStream(open(out_path,"w")))
+        else
+            stream = FASTQ.Reader(open(path))
+            out_stream = FASTQ.Writer(open(out_path,"w"))
+        end
+        sample_name = replace( replace( basename(path), ".gz" => "" ), ".fastq" => "" )
+        count = 0
+        sampled=0
+        ac = df_demux[df_demux.Sample .== sample_name, :Count][1]
+        sp = 1.0
+        ac > 0 ? sp = min(1.0, max_reads / ac) : sp = 1.0
+        if sp < 1.0
+            for record in stream
+                count += 1
+                if rand() < sp
+                    write(out_stream, record)
+                    sampled += 1
+                    global no_retained += 1
+                else
+                    global no_lost += 1
+                end
+            end
+            close(stream)
+            close(out_stream)
+            println("$(sample_name), sampled $(sampled) reads")
+            rm(path)
+            mv(out_path,path)
+            push!(df_demux_sampled,[sample_name,count,sampled])
+        else
+            close(stream)
+            close(out_stream)
+            println("$(sample_name), retained all $(ac) reads")
+            global no_retained += ac
+            rm(out_path)
+            push!(df_demux_sampled,[sample_name,ac,ac])
+        end
+    end
+end
+
+CSV.write("$(snakemake.output[3])", df_demux_sampled)
 CSV.write("$(snakemake.output[4])", df_reject)
 
 # save a quality_filter report
@@ -100,6 +164,8 @@ push!(df_qual,["Number of bad reads",bad_reads])
 push!(df_qual,["Number of short reads",short_reads])
 push!(df_qual,["Number of long reads",long_reads])
 push!(df_qual,["Number assigned by demux",no_assigned])
+push!(df_qual,["Number lost to downsampling",no_lost])
+push!(df_qual,["Number retained after downsampling",no_retained])
 CSV.write("$(snakemake.output[2])", df_qual)
 
 

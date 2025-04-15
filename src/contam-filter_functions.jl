@@ -32,7 +32,7 @@ function resolve_seq(s)
 end
 
 function db_cluster_seqs(path; proportion_thresh = 0.2, cluster_thresh = 0.015)
-    seqnames,seqs = read_fasta_with_names(path)
+    seqnames,seqs = read_fasta(path)
     seqs = degap.(seqs)
     resolved_seqs = resolve_seq.(seqs)
     kmer_vecs = kmer_count.(resolved_seqs,6)
@@ -48,7 +48,7 @@ function db_cluster_seqs(path; proportion_thresh = 0.2, cluster_thresh = 0.015)
 end
 
 function db_seqs(path)
-    seqnames,seqs = read_fasta_with_names(path)
+    seqnames,seqs = read_fasta(path)
     seqs = degap.(seqs)
     resolve_seqs = resolve_seq.(seqs)
     kmer_vecs = kmer_count.(resolve_seqs,6)
@@ -56,7 +56,7 @@ function db_seqs(path)
 end
 
 function contam_check(filename,db; thresh = 0.015)
-    seqnames,seqs = read_fasta_with_names(filename)
+    seqnames,seqs = read_fasta(filename)
     seqs = degap.(seqs)
     resolve_seqs = resolve_seq.(seqs)
     kmer_vecs = kmer_count.(resolve_seqs,6)

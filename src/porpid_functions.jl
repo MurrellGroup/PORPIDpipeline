@@ -1,5 +1,5 @@
-using NextGenSeqUtils, PORPID, StatsBase, HypothesisTests, DataFrames,
-    BioSequences, IterTools, CSV, FASTX
+using PORPID, StatsBase, HypothesisTests, DataFrames
+using BioSequences, IterTools, CSV, FASTX
 
 """
 Given results of the LDA, filter likely offspring UMIs and apply qc

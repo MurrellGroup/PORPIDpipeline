@@ -1,16 +1,17 @@
-using NextGenSeqUtils, DPMeansClustering,
-RobustAmpliconDenoising, StatsBase,
+using DPMeansClustering,
+StatsBase,
 PyPlot, MultivariateStats,
-BioSequences,
+BioSequences, MAFFT_jll, FastTree_jll,
 Distributions,LinearAlgebra,DataFrames,CSV,
 DataFramesMeta, Seaborn,
 Compose, Colors
 
+import RobustAmpliconDenoising
 import MolecularEvolution
 
 #Extra import
 function read_fasta_with_everything(filename; seqtype=String)
-    records = NextGenSeqUtils.read_fasta_records(filename)
+    records = read_fasta_records(filename)
     return seqtype[FASTA.sequence(seqtype, r) for r in records], [FASTA.identifier(r) for r in records], [FASTA.description(r) for r in records]
 end
 
@@ -75,7 +76,7 @@ end
 
 """
     mafft(inpath, outpath; path="", flags::Vector{String}=String[], kwargs...)
-Julia wrapper for mafft.
+Julia wrapper for mafft that makes use of MAFFT_jll.
 """
 function mafft(inpath, outpath; path="", flags::Vector{String}=String[], kwargs...)
     mktempdir() do mydir
@@ -91,7 +92,7 @@ function mafft(inpath, outpath; path="", flags::Vector{String}=String[], kwargs.
        end
        progress = "$(mydir)/mafft.progress"
        # --adjustdirection
-       run(`$mafft $flagstrings $args --quiet --progress $progress --out $outpath $inpath`)
+       run(`$(mafft_fftns()) $flagstrings $args --quiet --progress $progress --out $outpath $inpath`)
    end
 end
 
@@ -424,9 +425,9 @@ function fasttree_nuc(seqs,seqnames; quiet = false)
        treefile = string(mydir, "/fasttree.newick")
        write_fasta(string(mydir, "/sequences.fasta"), seqs,names = seqnames)
        if quiet
-       run(`fasttree -quiet -nosupport -nt -gtr -out $(treefile) $(seqfile)`)
+       run(`$(fasttree_double()) -quiet -nosupport -nt -gtr -out $(treefile) $(seqfile)`)
        else
-       run(`fasttree -nosupport -nt -gtr -out $(treefile) $(seqfile)`)
+       run(`$(fasttree_double()) -nosupport -nt -gtr -out $(treefile) $(seqfile)`)
        end
        #open the file and return lines
        lines = open(string(mydir,"/fasttree.newick"), "r") do io
@@ -442,9 +443,9 @@ function fasttree_AA(seqs,seqnames; quiet = false)
        treefile = string(mydir, "/fasttree.newick")
        write_fasta(string(mydir, "/sequences.fasta"), seqs,names = seqnames)
        if quiet
-       run(`fasttree -quiet -nosupport -out $(treefile) $(seqfile)`)
+       run(`$(fasttree_double()) -quiet -nosupport -out $(treefile) $(seqfile)`)
        else
-       run(`fasttree -nosupport -out $(treefile) $(seqfile)`)
+       run(`$(fasttree_double()) -nosupport -out $(treefile) $(seqfile)`)
        end
        #open the file and return lines
        lines = open(string(mydir,"/fasttree.newick"), "r") do io
@@ -455,28 +456,64 @@ function fasttree_AA(seqs,seqnames; quiet = false)
 end
 
 """
+    artefact_cutoff(ccs_counts,af_thresh)
+Compute ccs cutoff from vector of ccs_counts and a threshold between 0 and 1
+"""
+function artefact_cutoff(ccs_counts,af_thresh)
+    # ccs=sort(ccs_counts)
+    # tot=sum(ccs)
+    # cum_ccs=cumsum(ccs)
+    # cut=tot*af_thresh
+    # cut_ind=findfirst(x->x>cut,cum_ccs)
+    # af_cutoff=ccs[cut_ind]
+    af_cutoff = Int(ceil(maximum(ccs_counts)*af_thresh))
+    return(af_cutoff)
+end
+
+"""
     family_size_umi_len_stripplot
 Draws a stripplot of family sizes vs. UMI length from an input
 DataFrame. Returns the figure object.
 """
-function family_size_umi_len_stripplot(data; fs_thresh=5)
+function family_size_umi_len_stripplot(data;
+                    fs_thresh=5, af_thresh=0.15, af_cutoff=1)
     tight_layout()
     fig = figure(figsize = (6,2))
     ax = PyPlot.axes()
+    
+    
 
     stripplot(y = [length(ix) for ix in data[!,:UMI]],
         x = data[!,:fs],
         hue = data[!,:tags],
         hue_order = [
             "fs<$(fs_thresh)",
-            "UMI_len != 8",
+            "maybe-artefact",
             "likely_real",
+            "UMI_len != 8",
             "LDA-rejects",
+            "minag-reject",
             "heteroduplex"
         ],
-        alpha = 0.2, dodge = true, jitter = 0.3, orient = "h")
-        labels = xlabel("UMI family size"), ylabel("UMI length")
+        alpha = 0.6, dodge = true, jitter = 0.3, orient = "h", ax=ax)
+        
+            
+    yticklabels = ax.get_yticklabels()
+    new_ytick_labels=(x->x[:get_text]()).(yticklabels)
+    allowed=["7","8","9"]
+    new_ytick_labels=(x->x in allowed ? x : " ").(new_ytick_labels)
+    
+    ax.set_yticks(ax.get_yticks())
+    ax.set_yticklabels(new_ytick_labels)
 
+    
+    # af_cutoff=artefact_cutoff(data[!,:fs], af_thresh)
+    axvline([af_cutoff-0.5],c="red",label="artefact threshold")
+    
+    aftp=af_thresh*100
+    labels = xlabel("UMI family size"), ylabel("UMI length")
+    #  with $(aftp)% artefact threshold (fs=$(af_cutoff))
+    
     # Shrink current axis by 20%
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
@@ -493,6 +530,72 @@ function family_size_umi_len_stripplot(data; fs_thresh=5)
 
     return fig
 end
+
+"""
+    family_size_stripplot
+Draws a stripplot of family sizes with large jitter for maybe-artefact
+and likely_real from an input DataFrame. Returns the figure object.
+"""
+function family_size_stripplot(data;
+                    fs_thresh=5, af_thresh=0.15, af_cutoff=1)
+    tight_layout()
+    fig = figure(figsize = (6,2))
+    ax = PyPlot.axes()
+
+    stripplot( y = [length(ix) for ix in data[!,:UMI]],
+        x = data[!,:fs],
+        hue = data[!,:tags],
+        hue_order = [
+            "fs<$(fs_thresh)",
+            "maybe-artefact",
+            "likely_real",
+            "minag-reject"
+        ],
+        alpha = 0.6, dodge = false, jitter = 0.4, orient = "h")
+        
+    ccs = data[ (data[!,:tags].=="likely_real") .|| (data[!,:tags].=="maybe-artefact"), :fs]
+    
+    af_cutoff=artefact_cutoff(ccs, af_thresh)
+    
+    axvline([af_cutoff-0.5],c="red",label="artefact threshold")
+    
+    for afths in 0.05:0.1:0.85
+        afc=artefact_cutoff(ccs, afths)
+        axvline([afc-0.5],alpha=1.0)
+    end
+    
+    afths=0.95
+    afc=artefact_cutoff(ccs, afths)
+    axvline([afc-0.5],alpha=1.0,label="5% 15% ... 95%")
+    
+    axvline([af_cutoff-0.5],c="red")
+    
+    
+    aftp=af_thresh*100
+    
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    # Put a legend to the right of the current axis
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+
+    # Summary for plot title
+    # t = @transform(data, :is_likely_real = :tags .== "likely_real")
+    # g = DataFramesMeta.groupby(t,:is_likely_real)
+    # cts = @based_on(g, CCS = sum(:fs))
+    # cts = @combine(g, :CCS = sum(:fs))
+    # cts = sort!(cts, [:is_likely_real], rev = true)
+    # pc_artefact = round(100 * cts[2, :CCS] / (cts[1, :CCS] + cts[2, :CCS]),digits=1)
+    nlr=sum(data[!,:tags].=="likely_real")
+    naf=sum(data[!,:tags].=="maybe-artefact")
+    pc_artefact = round(100 * naf / (nlr + naf),digits=1)
+    
+    labels = xlabel("$(aftp)% af-thresh (fs=$(af_cutoff)) = $(pc_artefact)% artefacts"),
+            ylabel("jitter plot")
+
+    return fig
+end
+
 
 """
     di_nuc_freqs(umis,weights)
@@ -627,15 +730,23 @@ const NT_colors = [
 
 function highlighter_figure(fasta_collection; out_path = "figure.png")
     #read in and collapse
-    seqnames, ali_seqs = read_fasta_with_names(fasta_collection);
+    seqnames, ali_seqs = read_fasta(fasta_collection);
     collapsed_seqs, collapsed_sizes, collapsed_names = variant_collapse(ali_seqs; prefix = "v")
-
+    
+    if length(collapsed_seqs) > 1000
+        @warn "$(fasta_collection) too large for tree draw, sampling 1000 seqs from $(length(collapsed_seqs))"
+        ss = vcat([1],sample(2:length(collapsed_seqs),999,replace=false))
+        collapsed_seqs = collapsed_seqs[ss]
+        collapsed_sizes = collapsed_sizes[ss]
+        collapsed_names = collapsed_names[ss]
+    end
+    
     if length(collapsed_seqs) == 1
         @warn "All sequences in $(split(basename(fasta_collection),".fast")[1]) are identical, so no collapsed tree can be created"
         SVG(out_path, 20cm, 20cm) #blank SVG
     else
         treestring = fasttree_nuc(collapsed_seqs, collapsed_names; quiet = true)[1];
-        newt = MolecularEvolution.gettreefromnewick(treestring, MolecularEvolution.GeneralFelNode);
+        newt = MolecularEvolution.gettreefromnewick(treestring, MolecularEvolution.FelNode);
         root = [n for n in MolecularEvolution.getleaflist(newt) if split(n.name,'_')[1] == "v1"][1]
         rerooted = MolecularEvolution.ladderize(MolecularEvolution.reroot(root))
 
@@ -658,7 +769,7 @@ function highlighter_figure(fasta_collection; out_path = "figure.png")
 
         img = MolecularEvolution.highlighter_tree_draw(rerooted, uppercase.(collapsed_seqs), collapsed_names, uppercase(collapsed_seqs[1]);
             legend_colors = NT_colors, legend_padding = 1cm,
-            tree_args = [:line_width => 0.5mm, :font_size => 1, :dot_size_dict => dot_size_dict, :label_color_dict => color_dict,
+            tree_args = [:line_width => 0.2mm, :font_size => 1, :dot_size_dict => dot_size_dict, :label_color_dict => color_dict,
                 :dot_color_dict => color_dict, :max_dot_size => 0.1, :dot_opacity => 0.6, :name_opacity => 0.8])
         compose(context(0.05,0.01,0.95,0.99), img) |> SVG(out_path, 20cm, 20cm)
     end

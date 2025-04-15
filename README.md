@@ -2,9 +2,9 @@
 
 by Alec Pankow and Ben Murrell, now maintained by Hugh Murrell
 
-now upgraded to Julia version 1.7.1
+now upgraded to Julia version 1.10.5
 
-## branch master 
+## Branch: master (including the new artefactfilter)
 
 ## Quick start
 
@@ -15,39 +15,53 @@ now upgraded to Julia version 1.7.1
    - `apt upgrade`
 - Snakemake
    - `apt-get install -y snakemake`
-- mafft
-   - `apt-get install -y mafft`
-- fasttree
-   - `apt-get install -y fasttree`
 - python3 packages
   - `apt-get install python3-pandas`
   - `apt-get install python3-seaborn`
 
 
-### Julia version 1.7
+### Julia version 1.10.5
 
-Download and unpack the latest Julia (we recommend version 1.7.1) from: 
-
-[https://julialang.org/downloads/](https://julialang.org/downloads/)
-
-Make sure you can enter the julia REPL from the command line, on an ubuntu machine you would do:
+We recommend you use the `juliaup` version manager to install julia.
+from a terminal you can do this as follows:
 
 ```bash
-# move the julia system to a lib directory
-mv julia-1.7.1 /usr/lib/julia-1.7.1
-# make julia v1.7.1 executable from the command line
-ln -s /usr/lib/julia-1.7.1/bin/julia /usr/local/bin/julia
-# check that you can enter the julia REPL
+curl -fsSL https://install.julialang.org | sh
+```
+
+This should install the Julia version manager, `juliaup` as well as
+the latest version of Julia. To find out how to use the version manager 
+to makesure you have version 1.10.5 as your default, go here:
+
+[https://github.com/JuliaLang/juliaup]
+
+Once Julia is installed, make sure you can enter the julia REPL from 
+the command line and check the version number by logging out and in again and
+then from your new terminal session:
+
+```bash
+juliaup status
 julia --version
 ```
+
+If the version number is not 1.10.5 then you need to use `juliaup` to install
+that version and make it the default. 
+
+```bash
+juliaup add 1.10.5
+juliaup default 1.10.5
+```
+
+for further details concerning `juliaup` go here:
+
+[https://github.com/JuliaLang/juliaup?tab=readme-ov-file#using-juliaup]
 
 ### cloning the PORPIDpipeline repository
 
 Now that the dependencies are setup we clone the PORPIDpipeline repository
 
 ```bash
-cd ~
-git clone git@github.com:MurrellGroup/PORPIDpipeline.git
+git clone https://github.com/MurrellGroup/PORPIDpipeline.git
 ```
 
 ### setting up the Julia package environment
@@ -66,24 +80,65 @@ This will activate, install, and precompile the `julia` environment specified by
 above is not strictly needed but is useful if there are issues with installing
 the `julia` packages listed in `Project.toml`
 
-Next, add the following text to your Julia startup file (typically at `~/.julia/config/startup.jl`; 
-you may need to create the directory if not present, `mkdir -p ~/.julia/config`).
+### Workflow
 
-```julia
-using Pkg
-if isfile("Project.toml") && isfile("Manifest.toml")
-    Pkg.activate(".")
-end
+The graph below summarizes the overall organization of the workflow. 
+Each node in the graph is a *rule* in the The [Snakefile](Snakefile).
+
+![rulegraph](rulegraph.png)
+
+Snakemake makes use of a `Snakefile` and a `config` file to specify 
+input and output files for each rule and to set parameters for each 
+rule in the workflow. Global parameters that can be changed by the 
+user editing the `Snakefile` are as follows:
+
+```
+# PORPIDpipeline parameters
+# demux
+chunk_size = 100000      # default 100000
+error_rate = 0.01        # default 0.01
+min_length = 2100        # default 2100
+max_length = 4300        # default 4300
+max_reads = 100000       # default 100000 reads per sample,
+verbose = "false"        # default "false", use "true" to debug demux
+#porpid
+fs_thresh = 1            # default 1 (or use 5 if af_thresh is 0)
+lda_thresh = 0.995       # default 0.995
+#consensus
+agreement_thresh = 0.7   # default 0.7
+af_thresh = 0.35         # default 0.35 (drops smallest 35% of CCS reads)
+#contam
+cluster_thresh = 0.015   # default 0.015
+proportion_thresh = 0.2  # default 0.2
+dist_thresh = 0.015      # default 0.015
+contam_toggle = "on"     # default "on", use "off" to disable
+#postproc
+panel_thresh = 50        # default 50
+#tar
+degap = "true"           # default "true", use "false" to disable
+collapse = "true"        # default "true", use "false" to disable
+porpid_archive = "full"  # default "full", use "part" for partial archive
 ```
 
-This will activate the local environment at Julia startup.
+Note that with the advent of PacBio Revio sequencer, the number of reads
+per sample has grown to outstrip memory available on standard CPUs. 
+To enable a trouble free pipeline run, we now allow the user to specify
+the maximum number of reads per sample using the `max_reads` parameter above.
+Samples with reads exceeding this limit are then randomly sub-sampled to
+reduce the number of reads accordingly.
 
+We also introduce the option of a **partial** archive of the intermediate
+**porpid** directory. This option is made available to ameliorate the 
+inordinately long time it can take to archive and gzip the huge directory
+structures produced when processing PacBio Revio datasets.
 
-### Configuration
+### Sample configuration
 
-To configure the PORPIDpipeline workflow, first edit the demo `config.yaml` file to reflect
-your library construction. 
-It should follow the same format shown in the *demo* example below.
+Parameters for each sample are provided in the `config.yaml` file. This file
+should reflect your library construction, amplicon identity and any override
+parameter settings. 
+
+It should follow the same format shown in the **demo** example below.
 
 ```yaml
 demo:
@@ -95,6 +150,7 @@ demo:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAcactcaNNNNNNNNGTCATTGGTCTTAAAGGTACCTG
     sec_str_primer: TAGGCATCTCCT
     panel: "panels/HIV1_COM_2017_5970-8994_DNA_stripped.fasta"
+    af_override: 0.4
   donor_3_REN:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAggtagcNNNNNNNNGTCATTGGTCTTAAAGGTACCTG
     sec_str_primer: TAGGCATCTCCT
@@ -103,10 +159,13 @@ demo:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAacagtgNNNNNNNNGTATGTCATTGACAGTCCAGC
     sec_str_primer: TTGACTAGCGGAGGCTAGAAGGAGA
     panel: "panels/HIV1_COM_2017_787-3300_DNA_stripped.fasta"
+    af_override: 0.3
   donor_2_GP:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAcactcaNNNNNNNNGTATGTCATTGACAGTCCAGC
     sec_str_primer: TTGACTAGCGGAGGCTAGAAGGAGA
     panel: "panels/HIV1_COM_2017_787-3300_DNA_stripped.fasta"
+    af_override: 0.0
+    fs_override: 14
   donor_3_GP:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAggtagcNNNNNNNNGTATGTCATTGACAGTCCAGC
     sec_str_primer: TTGACTAGCGGAGGCTAGAAGGAGA
@@ -133,6 +192,10 @@ gzipped CCS .fastq files should be placed in the `raw-reads/` subdirectory and n
 according to the the dataset name used in the `config.yaml` file, ie, `demo.fastq.gz`
 for the *demo* dataset.
 
+We also use the `config` file to allow an **override** for a particular sample, 
+of the default artefact filter threshold, and/or, the default family size filter. 
+See the demo config file above.
+
 ### Preview and Execution
 
 Preview jobs with Snakemake and run with {n} cores.
@@ -143,9 +206,15 @@ snakemake -np
 
 #run
 snakemake -j{n}
+
+#in the cloud
+nohup snakemake -j{n}&
+cat nohup.out
 ```
 
-For more info on Snakemake, see https://snakemake.readthedocs.io/en/stable/
+For more info on Snakemake, see:
+
+[https://snakemake.readthedocs.io/en/stable/]
 
 ## Conda setup
 
@@ -171,10 +240,10 @@ clone the PORPIDpipeline repository
 
 ```bash
 cd ~  # or some other directory used for your anaconda installation
-git clone git@github.com:MurrellGroup/PORPIDpipeline.git
+git clone https://github.com/MurrellGroup/PORPIDpipeline.git
 ```
 
-and then all the PORPIDpipeline dependencies including `julia` version `1.7.1`
+and then all the PORPIDpipeline dependencies including `julia` version `1.10.5`
 ( as listed in the PORPIDpipeline conda environment spec in `environment.yaml`),
 can be installed in a `conda` environment via `mamba` using the commands:
 
@@ -337,16 +406,8 @@ of cores needed for each step in the pipeline.
 We have not attempted this yet, and it would probably require writing a
 `slurm` efficient version of the `snakefile`. 
 
-Watch this space for further developments.
-
 ## Documentation
 
-### Workflow
-
-The graph below summarizes the overall organization of the workflow. 
-Each node in the graph is a *rule* in the The [Snakefile](Snakefile).
-
-![rulegraph](rulegraph.png)
 
 
 An introduction to PacBio sequencing and an explanation for each *PORPIDpipeline* rule 

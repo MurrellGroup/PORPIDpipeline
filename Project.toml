@@ -1,7 +1,7 @@
 name = "PORPIDpipeline"
 uuid = "7caf9691-7b1e-49a7-bd1f-2a27e55f6b24"
 authors = ["Hugh Murrell <hugh.murrell@gmail.com>", "Ben Murrell <murrellb@gmail.com>", "Alec Pankow <alec.pankow@gmail.com>"]
-version = "1.7.1"
+version = "1.10.5"
 
 [deps]
 BioSequences = "7e6ae17a-c86d-528c-b3b9-7f778a29fe59"
@@ -17,20 +17,21 @@ DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 FASTX = "c2308a5c-f048-11e8-3e8a-31650f418d12"
+FastTree_jll = "046fc0e8-debb-562a-987b-147c85b24435"
 HypothesisTests = "09f84164-cd44-5f33-b23f-e6b0d136a0d5"
 IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+MAFFT_jll = "72a4bdf2-be5e-5c84-b157-f1dc2927f791"
 MolecularEvolution = "9f975960-e239-4209-8aa0-3d3ad5a82892"
 MultivariateStats = "6f286f6a-111f-5878-ab1e-185364afe411"
-NextGenSeqUtils = "59ec5594-ae11-5d8d-a868-831a7e904d88"
 PORPID = "77e13452-6b24-11e9-337f-5707c85b7dc6"
+PrettyTables = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
 RobustAmpliconDenoising = "4bd7a7d9-cbc9-5944-9319-21f5e7d2c618"
 Seaborn = "d2ef9438-c967-53ab-8060-373fdd9e13eb"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsFuns = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
-WebBlast = "9f6dbb68-adea-48dd-82a4-058b403bed1f"
 
 [compat]
-julia = "1.7.1"
+julia = "1.10.5"

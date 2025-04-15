@@ -1,5 +1,10 @@
+using Pkg
+Pkg.activate("./")
+Pkg.instantiate()
+Pkg.precompile()
+
 ENV["MPLBACKEND"] = "Agg"
-using Base64, CSV, DataFrames, NextGenSeqUtils, FASTX, WebBlast
+using Base64, CSV, DataFrames, FASTX, PrettyTables
 
 
 function get_image_str(file)
@@ -9,25 +14,10 @@ function get_image_str(file)
     return Base64.base64encode(fig_str)
 end
 
-function format_tbl(df)
-    # df = CSV.read(file, DataFrame)
-    tbl_html = DataFrames.repr("text/html", df)
-    tbl_fmt = replace(tbl_html,
-        "<table class=\"data-frame\">" => "<table class=\"table table-striped\";>")
-    tbl_fmt = replace(tbl_fmt, r"<p>.+columns</p>" => "") #remove display description
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"String\">String</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"String\">String</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"String15\">String15</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"String31\">String31</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"Int64\">Int64</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"Int64\">Int64</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"Float64\">Float64</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<tr><th></th></tr>" => "") #remove type rows
-    # tbl_fmt = replace(tbl_fmt, "<tr><th></th><th title=\"String\">String</th><th title=\"Int64\">Int64</th></tr>" => "") #remove types
-    # tbl_fmt = replace(tbl_fmt, r"<thead>.+</thead>" => "") #remove heading row
-    tbl_fmt = replace(tbl_fmt, r"<th></th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th>.</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th>..</th>" => "") #remove row count column
+function format_tbl(df; font="12px")
+    tbl_fmt = pretty_table(String, df; backend = Val(:html), alignment=:l, tf=tf_html_dark)
+    tbl_fmt = replace(tbl_fmt, "<table>" => "<div class=\"data-frame\"><table class=\"table table-striped\"; style=\"font-size:$(font);\">")
+    tbl_fmt = replace(tbl_fmt, "</table>" => "</table></div>")
     return tbl_fmt
 end
 
@@ -36,14 +26,13 @@ end
 sample = snakemake.wildcards["sample"]
 dataset = snakemake.wildcards["dataset"]
 
-di_nuc_fig = get_image_str(snakemake.input[8]);
 qc_fig = get_image_str(snakemake.input[1]);
-qc_tbl = format_tbl(CSV.read(snakemake.input[2], DataFrame));
-mds_fig = get_image_str(snakemake.input[3]);
-phylo_fig = get_image_str(snakemake.input[4]);
-pr_tbl = format_tbl(CSV.read(snakemake.input[7], DataFrame));
-
-br_tbl = "click <a href=$(sample)-blast.html> here </a> for blast report"
+af_fig = get_image_str(snakemake.input[2]);
+qc_tbl = format_tbl(CSV.read(snakemake.input[3], DataFrame));
+mds_fig = get_image_str(snakemake.input[4]);
+phylo_fig = get_image_str(snakemake.input[5]);
+pr_tbl = format_tbl(CSV.read(snakemake.input[8], DataFrame));
+di_nuc_fig = get_image_str(snakemake.input[9]);
 
 html_str_hdr = """
 <html>
@@ -61,10 +50,20 @@ html_str_hdr = """
                 text-align: center;
                 align-self: center;
             }
+            .headerLastRow{
+                display: none;
+            }
+            .th {
+                border: 1px solid black;
+            }
+            .td {
+                border: 1px solid black;
+            }
             img {
                 margin: auto;
             }
         </style>
+        <!--
         <style>
         .collapsible {
           background-color: #777;
@@ -89,6 +88,7 @@ html_str_hdr = """
           background-color: #f1f1f1;
         }
         </style>
+        -->
     </head>
 """
 html_str = html_str_hdr * """
@@ -102,13 +102,16 @@ html_str = html_str_hdr * """
             <h3>
                 Results of PORPID processing
             </h3>
-            <h4>UMI stripplot</h4>
+            <h4>UMI stripplots</h4>
             <p>
                 The stripplot below displays UMI family size (the number of individual
                 CCS reads with a given UMI) as a function of the UMI length determined
                 by PORPID. Only "likely_real" UMIs are kept for downstream analysis.
-                "LDA-rejects" are likely offspring from other UMI bins, "fs<5" indicates
-                sequencing depth was under 5 CCS and too low for consensus analysis.
+                "LDA-rejects" are likely offspring from other UMI bins, "fs&ltn" indicates
+                sequencing depth was under n CCS and too low for consensus analysis.
+                Some UMIs have been flagged as "artefacts" determined by the "af_thresh"
+                parameter. Artefacts and likely reals are displayed in the second stripplot
+                to highlight the artefact cutoff decision.
                 UMIs were flagged as "heteroduplex" when the set of reads had a signature
                 drop in quality in the UMI region indicative of a superimposed signal of
                 two different UMI sequences during circular consensus generation.
@@ -117,11 +120,14 @@ html_str = html_str_hdr * """
             </p>
             <img src="data:image/png;base64,$(qc_fig)
             "alt="" width=100% style="max-width: 700px;">
+            </p>
+            <img src="data:image/png;base64,$(af_fig)
+            "alt="" width=100% style="max-width: 700px;">
             <h4>UMI family and CCS totals for each type of PORPID result</h4>
             <p>
                Note that any "BPB-rejects" in the table below are sequences that were
                discarded due to <b> bad primer blocks </b>.
-               These sequences were not included in the stripplot above as they
+               These sequences were not included in the stripplots above as they
                were discarded before the breakdown into UMI families.
                Sequences rejected by the <tt>porpid</tt> script can be recovered by
                looking in the <tt>porpid</tt> archive for the file: <br>
@@ -132,23 +138,22 @@ html_str = html_str_hdr * """
                Postproc filtering
             </h3>
             <p>
-               Some <tt>likely-real</tt> UMI families may be rejected
-               by the <tt>postproc</tt> script if they do not meet threshold requirements.
+               Some UMI families may be rejected
+               by the <tt>PORPIDpipeline</tt> if they do not meet threshold requirements.
             </p><p>
-               Either their <tt>minimum_agreement</tt> score is too low or their
-               <tt>distance_from_panel</tt> score is too high.
+               Either they were rejected because their <tt>minimum_agreement</tt>
+               score was too low or they were rejected because their <tt>distance_from_panel</tt>
+               score was too high or they were classified as artefacts if their CCS count was
+               less than the artefact cutoff.
             </p><p>
-               If the table below displays a rejection count greater than zero then
+               If the table below displays any rejection count greater than zero then
                the consensus sequence for the rejected UMI families can be inspected
                in the rejection file:<br>
                <tt> postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.fasta </tt>
             </p>
             $(pr_tbl)
             <p>
-               Note that the total number of sequences output by <tt>PORPIDpipeline</tt>
-               can be computed by subracting the rejection counts in the table above
-               from the number of <tt>likely-real</tt> UMI families.
-               These <i>successful</i> sequences can be found in the <tt>fasta</tt> file: <br>
+               The <i>successful</i> sequences can be found in the <tt>fasta</tt> file: <br>
                <tt> postproc/$(dataset)/$(sample)/$(sample).fasta </tt>
             <h3>
             Post-processing of single-template consensus sequences
@@ -187,8 +192,6 @@ html_str = html_str_hdr * """
               </p>
               <img src="data:image/png;base64,$(di_nuc_fig)
               "alt="" width=100% style="max-width: 500px;">
-              <h4> BLAST reports for clades identified in this sample </h4>
-              $(br_tbl)
         </div>
     </body>
  </html>
@@ -198,18 +201,3 @@ open(snakemake.output[1],"w") do io
     write(io,html_str)
 end
 
-html_str = html_str_hdr * """
-<body>
-<h3> Blast results ... </h3>
-
-No blast results available yet, to get blast results run
-
-<code>
-snakemake -s SnakeBlast -k --rerun-incomplete -j1
-</code>
-</body>
-"""
-
-open(snakemake.output[2],"w") do io
-    write(io,html_str)
-end

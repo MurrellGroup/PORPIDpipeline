@@ -1,5 +1,10 @@
+using Pkg
+Pkg.activate("./")
+Pkg.instantiate()
+Pkg.precompile()
+
 ENV["MPLBACKEND"] = "Agg"
-using Base64, CSV, DataFrames, NextGenSeqUtils, FASTX, WebBlast
+using Base64, CSV, DataFrames, NextGenSeqUtils, FASTX, PrettyTables
 
 function get_image_str(file)
     fig_str = open(file,"r") do io
@@ -8,30 +13,10 @@ function get_image_str(file)
     return Base64.base64encode(fig_str)
 end
 
-
-
-function format_tbl(df)
-    # df = CSV.read(file, DataFrame)
-    tbl_html = DataFrames.repr("text/html", df)
-    tbl_fmt = replace(tbl_html,
-        "<table class=\"data-frame\">" => "<table class=\"table table-striped\";>")
-    tbl_fmt = replace(tbl_fmt, r"<p>.+columns</p>" => "") #remove display description
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"String\">String</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"String\">String</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"String31\">String31</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"String15\">String15</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"Any\">Any</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"Int64\">Int64</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"Int64\">Int64</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"Float64\">Float64</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"Bool\">Bool</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th title=\"Bool\">Bool</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<tr><th></th></tr>" => "") #remove type rows
-    # tbl_fmt = replace(tbl_fmt, "<tr><th></th><th title=\"String\">String</th><th title=\"Int64\">Int64</th></tr>" => "") #remove types
-    # tbl_fmt = replace(tbl_fmt, r"<thead>.+</thead>" => "") #remove heading row
-    tbl_fmt = replace(tbl_fmt, r"<th></th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th>.</th>" => "")
-    tbl_fmt = replace(tbl_fmt, r"<th>..</th>" => "") #remove row count column
+function format_tbl(df; font="12px")
+    tbl_fmt = pretty_table(String, df; backend = Val(:html), alignment=:l, tf=tf_html_dark)
+    tbl_fmt = replace(tbl_fmt, "<table>" => "<div class=\"data-frame\"><table class=\"table table-striped\"; style=\"font-size:$(font);\">")
+    tbl_fmt = replace(tbl_fmt, "</table>" => "</table></div>")
     return tbl_fmt
 end
 
@@ -48,44 +33,52 @@ qual_df = CSV.read("porpid/$(dataset)/quality_report.csv", DataFrame)
 qual_tbl = format_tbl(qual_df)
 
 demux_df = CSV.read("porpid/$(dataset)/demux_report.csv", DataFrame)
+# remove trailing .gz from sample names
+# demux_df[:,"Sample"] = (x->replace(x,".gz"=>"")).(demux_df[:,"Sample"])
 demux_tbl = format_tbl(demux_df)
 
 ####### make a table of ALL read counts
-seq_counts_df = DataFrame(Sample = [], Porpid_Seqs = [], Rejected_Min_Ag = [], Rejected_Panel = [], Rejected_Seqs = [], Final_Seqs = [])
+cfg = snakemake.params["config"]
+fs_thresh = snakemake.params["fs_thresh"]
+af_thresh = snakemake.params["af_thresh"]
+seq_counts_df = DataFrame(Sample = [], fs_used = [], af_used = [], Porpid_Seqs = [],
+            Rej_Artefact = [], Rej_Min_Ag = [], Rej_Panel = [], Rej_Seqs = [], Final_Seqs = [])
 for sample in sort(snakemake.params["SAMPLES"])
+    "fs_override" in keys(cfg[sample]) ? fs_used = cfg[sample]["fs_override"] : fs_used = fs_thresh
+    "af_override" in keys(cfg[sample]) ? af_used = cfg[sample]["af_override"] : af_used = af_thresh
     p_seqs, p_seq_names = read_fasta("porpid/$(dataset)/consensus/$(sample).fasta")    #porpid sequences
     r_seqs, r_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.fasta") #rejected sequences
     f_seqs, f_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta") #final sequences
     sample_reject_df = CSV.read("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.csv", DataFrame) #reject split
     r_ma_seq_number = sample_reject_df[1,"count"]
-    r_pan_seq_number = sample_reject_df[2,"count"]
+    r_art_seq_number = sample_reject_df[2,"count"]
+    r_pan_seq_number = sample_reject_df[3,"count"]
     p_seq_number = length(p_seqs)
     r_seq_number = length(r_seqs)
     f_seq_number = length(f_seqs)
-    push!(seq_counts_df, [sample, p_seq_number, r_ma_seq_number, r_pan_seq_number, r_seq_number, f_seq_number])
+    
+    push!(seq_counts_df, [sample, fs_used, af_used, p_seq_number, r_art_seq_number, r_ma_seq_number, r_pan_seq_number, r_seq_number, f_seq_number])
 end
 seq_counts_df[!, :Porpid_Seqs] = convert.(Int, seq_counts_df[:, :Porpid_Seqs])
-seq_counts_df[!, :Rejected_Min_Ag] = convert.(Int, seq_counts_df[:, :Rejected_Min_Ag])
-seq_counts_df[!, :Rejected_Panel] = convert.(Int, seq_counts_df[:, :Rejected_Panel])
-seq_counts_df[!, :Rejected_Seqs] = convert.(Int, seq_counts_df[:, :Rejected_Seqs])
+seq_counts_df[!, :Rej_Min_Ag] = convert.(Int, seq_counts_df[:, :Rej_Min_Ag])
+seq_counts_df[!, :Rej_Artefact] = convert.(Int, seq_counts_df[:, :Rej_Artefact])
+seq_counts_df[!, :Rej_Panel] = convert.(Int, seq_counts_df[:, :Rej_Panel])
+seq_counts_df[!, :Rej_Seqs] = convert.(Int, seq_counts_df[:, :Rej_Seqs])
 seq_counts_df[!, :Final_Seqs] = convert.(Int, seq_counts_df[:, :Final_Seqs])
 
 #create final table with sequence number and reads per template for porpid seqs
 joined_df = innerjoin(seq_counts_df, demux_df, on = :Sample)
 joined_df = rename!(joined_df,:Count => :Read_Count) #change Counts column name to Read_Count
 joined_df[!, :Reads_per_Porpid_Seq] = joined_df[!, :Read_Count] ./ joined_df[!, :Porpid_Seqs]
-joined_df = select(joined_df, [:Sample, :Reads_per_Porpid_Seq], :Porpid_Seqs, :Rejected_Min_Ag, :Rejected_Panel, :Rejected_Seqs, :Final_Seqs)
+joined_df = select(joined_df, [:Sample, :fs_used, :af_used, :Reads_per_Porpid_Seq], :Porpid_Seqs, :Rej_Min_Ag, :Rej_Artefact, :Rej_Panel, :Rej_Seqs, :Final_Seqs)
 joined_df_tbl = format_tbl(joined_df)
-CSV.write(snakemake.output[3], joined_df)
-
+CSV.write(snakemake.output[2], joined_df)
 
 contam_df = CSV.read("porpid/$(dataset)/contam_report.csv", DataFrame)
 # contam_df = contam_df[contam_df[:,:discarded],:]
 contam_df = filter(row -> row.discarded == "true", contam_df)
 contam_df = select(contam_df, :sample, :sequence_name, :nearest_nonself_variant, :nearest_nonself_distance)
-contam_tbl = format_tbl(contam_df)
-contam_tbl = replace(contam_tbl,
-     "<table class=\"table table-striped\";>" => "<table class=\"table table-striped\";  style=\"font-size: 8px\";>")
+contam_tbl = format_tbl(contam_df,font="8px")
 num_discarded = nrow(contam_df)
 if num_discarded == 0
     contam_tbl = ""
@@ -97,9 +90,7 @@ num_suspected = nrow(contam_suspect_df)
 if nrow(contam_suspect_df) > max_suspects
     contam_suspect_df = contam_suspect_df[1:max_suspects,:]
 end
-contam_suspect_tbl = format_tbl(contam_suspect_df)
-contam_suspect_tbl = replace(contam_suspect_tbl,
-     "<table class=\"table table-striped\";>" => "<table class=\"table table-striped\";  style=\"font-size: 8px\";>")
+contam_suspect_tbl = format_tbl(contam_suspect_df,font="8px")
 if num_suspected == 0
     contam_suspect_tbl = ""
 end
@@ -111,13 +102,9 @@ reject_df = CSV.read("porpid/$(dataset)/reject_report.csv", DataFrame)
 reject_tbl = format_tbl(reject_df);
 
 demux_dict = Dict(Pair.(demux_df.Sample, demux_df.Count))
-
-
-br_tbl = "click <a href=$(dataset)-blast.html> here </a> for blast reports."
+sampled_dict = Dict(Pair.(demux_df.Sample, demux_df.Sampled))
 
 # get parameters for parameter reporting
-
-
 
 html_str_hdr = """
 <html>
@@ -134,6 +121,9 @@ html_str_hdr = """
                 flex: 1;
                 text-align: center;
                 align-self: center;
+            }
+            .headerLastRow{
+                display: none;
             }
             img {
                 margin: auto;
@@ -162,6 +152,7 @@ html_str = html_str_hdr * """
               <li> error_rate = $(snakemake.params["error_rate"]) </li>
               <li> min_length = $(snakemake.params["min_length"]) </li>
               <li> max_length = $(snakemake.params["max_length"]) </li>
+              <li> max_reads = $(snakemake.params["max_reads"]) </li>
             </ul>
 """
                      
@@ -208,6 +199,7 @@ html_str = html_str * """
             <tr>
               <th>Sample</th>
               <th style=\"text-align:center\">Count</th>
+              <th style=\"text-align:center\">Sampled</th>
               <th style=\"text-align:left\">LR%</th>
             </tr></thead>
 """;
@@ -217,11 +209,12 @@ for sample in sort(snakemake.params["SAMPLES"])
     success = 0
     nr = nrow(qc_bins)
     nc = ncol(qc_bins)
-    if qc_bins[nr,1] == "likely_real"
-        success = floor(Int, 100 * qc_bins[nr,nc] / sum(qc_bins[:,nc]))
+    for r in 1:nr
+        if qc_bins[r,1] == "likely_real"
+            success = floor(Int, 100 * qc_bins[r,nc] / sum(qc_bins[:,nc]))
+        end
     end
-    
-    global html_str = html_str * "<tr> <td><a href=$(sample)/$(sample)-report.html target=blank> $(sample) </a> </td> <td style=\"text-align:center\"> $(demux_dict[sample]) </td>  <td> $(success)% </td></tr>"
+    global html_str = html_str * "<tr><td><a href=$(sample)/$(sample)-report.html target=blank> $(sample) </a> </td> <td style=\"text-align:center\"> $(demux_dict[sample]) </td> </td> <td style=\"text-align:center\"> $(sampled_dict[sample]) </td><td> $(success)% </td></tr>"
 end
 
 html_str = html_str * """
@@ -229,48 +222,20 @@ html_str = html_str * """
     <h4>parameters:</h4>
     <ul>
       <li> fs_thresh = $(snakemake.params["fs_thresh"]) </li>
+      <li> af_thresh = $(snakemake.params["af_thresh"]) </li>
       <li> lda_thresh = $(snakemake.params["lda_thresh"]) </li>
       <li> agreement_thresh = $(snakemake.params["agreement_thresh"]) </li>
       <li> panel_thresh = $(snakemake.params["panel_thresh"]) </li>
     </ul>
     <h3>sequence counts:</h3>
     $(joined_df_tbl)
-    Summary of sequence output from porpid, those that were rejected for being too disimilar to
-    the panel file, and the final sequence count after filtering. Reads per porpid sequence
+    Summary of sequence output from porpid, those that were rejected and the
+    final sequence count after filtering. Reads per porpid sequence
     can be used to compare average depth across different samples. 
-""";
-
-
-
-html_str = html_str * """
-            <h4> BLAST results for clades identified in each sample </h4>
-            $(br_tbl)
-        </div>
-    </body>
- </html>
 """;
 
 open(snakemake.output[1],"w") do io
     write(io,html_str)
 end
-
-html_str = html_str_hdr * """
-<body>
-<h3> Blast results ... </h3>
-
-No blast results available yet, to get blast results run
-
-<code>
-snakemake -s SnakeBlast -k --rerun-incomplete -j1
-</code>
-</body>
-"""
-
-open(snakemake.output[2],"w") do io
-    write(io,html_str)
-end
-
-
-
 
 

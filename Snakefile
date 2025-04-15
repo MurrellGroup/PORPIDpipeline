@@ -2,7 +2,7 @@ import subprocess, sys
 configfile: "config.yaml"
 DATASETS = [d for d in config for s in config[d]]
 SAMPLES = [s for d in config for s in config[d]]
-VERSION = "1.0"
+VERSION = "1.10.5"
 COMMIT = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD']).strip().decode()
 
 sys.stderr.write("Running PorpidPostproc\n")
@@ -16,28 +16,46 @@ def contam_input(wildcards):
         sample = SAMPLES
     )
 
-# PorpidPostproc parameters
+def bottle1_input(wildcards):
+    SAMPLES = [s for s in config[wildcards.dataset]]
+    return expand("porpid/{dataset}/tags/{sample}.csv",
+        dataset = wildcards.dataset,
+        sample = SAMPLES
+    )
+    
+def bottle2_input(wildcards):
+    SAMPLES = [s for s in config[wildcards.dataset]]
+    return expand("postproc/{dataset}/{sample}/{sample}.fasta",
+        dataset = wildcards.dataset,
+        sample = SAMPLES
+    )
+
+# PORPIDpipeline parameters
 # demux
-chunk_size = 10000   # default 10000
-error_rate = 0.01    # default 0.01
-min_length = 2100    # default 2100
-max_length = 4300    # default 4300
+chunk_size = 10000      # default 100000
+error_rate = 0.01        # default 0.01
+min_length = 2100        # default 2100
+max_length = 4300        # default 4300
+max_reads = 10000       # default 100000 reads per sample,
+                         # use something large for no downsampling
+verbose = "false"        # default "false", use "true" to debug demux
 #porpid
-fs_thresh = 5        # default 5
-lda_thresh = 0.995   # default 0.995
+fs_thresh = 1            # default 1 (or 5 if af_thresh is 0)
+lda_thresh = 0.995       # default 0.995
+#consensus
+agreement_thresh = 0.7   # default 0.7
+af_thresh = 0.35         # default 0.35 (drops smallest 35% of CCS reads)
 #contam
 cluster_thresh = 0.015   # default 0.015
 proportion_thresh = 0.2  # default 0.2
 dist_thresh = 0.015      # default 0.015
-# change to "off" to switch off contam filter
-contam_toggle = "on"   # default "on" 
+contam_toggle = "on"     # default "on", use "off" to disable
 #postproc
-agreement_thresh = 0.7   # default 0.7
 panel_thresh = 50        # default 50
 #tar
-# change this to "false" if you dont want 
-# degapped postproc sequences
-degap = "true"           # default "true"
+degap = "true"           # default "true", use "false" to disable
+collapse = "true"        # default "true", use "false" to disable
+porpid_archive = "full"  # default "full", use "part" for partial archive
 
 rule all:
     input:
@@ -59,6 +77,8 @@ rule demux:
         error_rate = error_rate,
         min_length = min_length,
         max_length = max_length,
+        max_reads = max_reads,
+        verbose = verbose,
         config = lambda wc: config[wc.dataset]
     script:
         "scripts/demux.jl"
@@ -67,23 +87,36 @@ rule porpid:
     input:
         "porpid/{dataset}/demux"
     output:
-        directory("porpid/{dataset}/porpid/{sample}.fastq"),
+        directory("porpid/{dataset}/porpid/{sample}.fastq.gz"),
         "porpid/{dataset}/tags/{sample}.csv"
         # directory("porpid/{dataset}/porpid/{sample}.fastq/{sample}")
     params:
         config = lambda wc: config[wc.dataset][wc.sample],
-	    fs_thresh = fs_thresh,
+        fs_thresh = fs_thresh,
         lda_thresh= lda_thresh
     script:
         "scripts/porpid.jl"
+        
+rule porpid_wait:
+    input:
+        files = bottle1_input
+    output:
+        "porpid/{dataset}/bottle1_report.csv"
+    script:
+        "scripts/bottle.jl"
 
 rule consensus:
     input:
-        "porpid/{dataset}/porpid/{sample}.fastq"
+        "porpid/{dataset}/porpid/{sample}.fastq.gz",
+        "porpid/{dataset}/tags/{sample}.csv",
+        "porpid/{dataset}/bottle1_report.csv"
     output:
-        "porpid/{dataset}/consensus/{sample}.fasta"
+        "porpid/{dataset}/consensus/{sample}.fasta",
+        "porpid/{dataset}/tags_filtered/{sample}.csv"
     params:
-        config = lambda wc: config[wc.dataset][wc.sample]
+        config = lambda wc: config[wc.dataset][wc.sample],
+        af_thresh = af_thresh,
+        agreement_thresh = agreement_thresh
     script:
         "scripts/consensus.jl"
 
@@ -100,49 +133,61 @@ rule contam:
         proportion_thresh =proportion_thresh,
         cluster_thresh = cluster_thresh,
         dist_thresh = dist_thresh,
-	contam_toggle = contam_toggle
+        contam_toggle = contam_toggle
     script:
         "scripts/contam.jl"
 
 rule postproc:
     input:
         "porpid/{dataset}/contam_passed",
-        "porpid/{dataset}/tags/{sample}.csv",
-        "porpid/{dataset}/porpid/{sample}.fastq"
+        "porpid/{dataset}/tags_filtered/{sample}.csv",
+        "porpid/{dataset}/porpid/{sample}.fastq.gz"
     output:
         report("postproc/{dataset}/{sample}/{sample}.fasta.mds.png", category = "postproc", caption = "report-rst/mds.rst"),
         "postproc/{dataset}/{sample}/{sample}.fasta.apobec.csv",
         report("postproc/{dataset}/{sample}/{sample}.fasta.tre.svg", category = "postproc", caption = "report-rst/highlighter.rst"),
         "postproc/{dataset}/{sample}/{sample}.fasta",
         report("postproc/{dataset}/{sample}/{sample}_qc_bins.png", category = "postproc", caption = "report-rst/bins.rst"),
+        report("postproc/{dataset}/{sample}/{sample}_artefacts.png", category = "postproc", caption = "report-rst/artefacts.rst"),
         "postproc/{dataset}/{sample}/{sample}_qc_bins.csv",
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.fasta",
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.csv",
         report("postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png", category = "postproc", caption = "report-rst/di_nuc_freq.rst")
     params:
+        config = lambda wc: config[wc.dataset][wc.sample],
         panel = lambda wc: config[wc.dataset][wc.sample]["panel"],
+        af_thresh = af_thresh,
         fs_thresh = fs_thresh,
         agreement_thresh = agreement_thresh,
         panel_thresh = panel_thresh
     script:
         "scripts/postproc.jl"
+        
+rule postproc_wait:
+    input:
+        files = bottle2_input
+    output:
+        "postproc/{dataset}/bottle2_report.csv"
+    script:
+        "scripts/bottle.jl"
 
 rule report:
     input:
         "postproc/{dataset}/{sample}/{sample}_qc_bins.png",
+        "postproc/{dataset}/{sample}/{sample}_artefacts.png",
         "postproc/{dataset}/{sample}/{sample}_qc_bins.csv",
         "postproc/{dataset}/{sample}/{sample}.fasta.mds.png",
         "postproc/{dataset}/{sample}/{sample}.fasta.tre.svg",
         "postproc/{dataset}/{sample}/{sample}.fasta",
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.fasta",
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.csv",
-        "postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png"
+        "postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png",
+        "postproc/{dataset}/bottle2_report.csv"
     params:
         VERSION = VERSION,
         COMMIT = COMMIT
     output:
-        "postproc/{dataset}/{sample}/{sample}-report.html",
-        "postproc/{dataset}/{sample}/{sample}-blast.html"
+        "postproc/{dataset}/{sample}/{sample}-report.html"
     script:
         "scripts/report.jl"
         
@@ -154,22 +199,24 @@ rule index:
         VERSION = VERSION,
         COMMIT = COMMIT,
         SAMPLES = SAMPLES,
+        config = lambda wc: config[wc.dataset],
         chunk_size = chunk_size,
         error_rate = error_rate,
         min_length = min_length,
         max_length = max_length,
+        max_reads = max_reads,
         proportion_thresh =proportion_thresh,
         cluster_thresh = cluster_thresh,
         dist_thresh = dist_thresh,
         fs_thresh = fs_thresh, 
+        af_thresh = af_thresh,
         lda_thresh = lda_thresh,
         agreement_thresh = agreement_thresh,
         panel_thresh = panel_thresh,
-	contam_toggle = contam_toggle
+        contam_toggle = contam_toggle
     output:
         "postproc/{dataset}/{dataset}-index.html",
-        "postproc/{dataset}/{dataset}-blast.html",
-	"postproc/{dataset}/{dataset}-sequence_report.csv"
+        "postproc/{dataset}/{dataset}-sequence_report.csv"
     script:
         "scripts/index.jl"
         
@@ -181,6 +228,8 @@ rule tar:
         "postproc/{dataset}-postproc.tar.gz"
     params:
         degap = degap,
+        collapse = collapse,
+        porpid_archive = porpid_archive,
         datasets = DATASETS,
         samples = SAMPLES
     script:

@@ -2,30 +2,46 @@
 """
     function H704_init_template_proc(fasta_collection, panel_file,
       mds_plot_file, apobec_file, realigned_tre_plot_file, realigned_file;
-      agreement_thresh=0.7,panel_thresh=50)
-Given a fasta collection, produce and write mafft alignments,
+      agreement_thresh=0.7,panel_thresh=50, af_thresh=0.15)
+Given a fasta collection, filter, produce and write mafft alignments,
 MDS plots with APOBEC model, and save MolEv phylogeny.
 """
 function H704_init_template_proc(fasta_collection, panel_file,
       mds_plot_file, apobec_file, realigned_tre_plot_file, realigned_file;
-      agreement_thresh=0.7, panel_thresh=50)
+      agreement_thresh=0.7, panel_thresh=50, af_thresh=0.15) #, af_cutoff=1)
     reject_df = DataFrame(reject_reason=String[],threshold=Float64[],count=Int64[])
     f = fasta_collection
     #align consensus
     seqs,seqnames,sizes,agreement_scores = read_HVTN(f)
-    annot_names = seqnames .* " num_CCS=" .* string.(sizes) .* " min_agreement=" .* string.(agreement_scores)
+    annot_names = seqnames .* " fs=" .* string.(sizes) .* " minag=" .* string.(agreement_scores)
+    reject_seqs=[]
+    reject_names=[]
     
+    # filter reads that do not make minimum agreement
     push!(reject_df,["minimum_agreement < threshold",agreement_thresh,
-    sum(agreement_scores .< agreement_thresh)])
+        sum(agreement_scores .< agreement_thresh)])
     
-    reject_seqs = seqs[agreement_scores .< agreement_thresh]
-    reject_names = annot_names[agreement_scores .< agreement_thresh]
+    reject_seqs = vcat(reject_seqs, seqs[agreement_scores .< agreement_thresh])
+    reject_names = vcat(reject_names, annot_names[agreement_scores .< agreement_thresh] .* " no_min_agreement" )
     
     #filter, minimum_agreement >= agreement_thresh (default 0.7)
     seqs = seqs[agreement_scores .>= agreement_thresh]
     annot_names = annot_names[agreement_scores .>=agreement_thresh]
     sizes = sizes[agreement_scores .>= agreement_thresh]
     agreement_scores = agreement_scores[agreement_scores .>= agreement_thresh]
+    
+    # calculate af_cutoff after discarding seq that dont meet minimum agreement
+    af_cutoff = artefact_cutoff(sizes,af_thresh)
+    
+    # filter artefacts
+    push!(reject_df,["ccs_count < artefact cutoff",af_cutoff,sum(sizes .< af_cutoff)])
+    reject_seqs=vcat(reject_seqs, seqs[sizes .< af_cutoff])
+    reject_names=vcat(reject_names, annot_names[sizes .< af_cutoff].*" possible_artefact_at_$(af_cutoff)_cutoff" )
+    
+    seqs = seqs[sizes .>= af_cutoff]
+    annot_names = annot_names[sizes .>= af_cutoff]
+    agreement_scores = agreement_scores[sizes .>= af_cutoff]
+    sizes = sizes[sizes .>= af_cutoff]
     
     ali_seqs = mafft_align(seqs);
     
@@ -66,7 +82,7 @@ function H704_init_template_proc(fasta_collection, panel_file,
 
     push!(reject_df,["dist_from_panel >= threshold",panel_thresh,sum(scores .>= panel_thresh)])
     reject_seqs=vcat(reject_seqs,extracted_seqs[scores .>= panel_thresh])
-    reject_names=vcat(reject_names,annot_names[scores .>= panel_thresh])
+    reject_names=vcat(reject_names,annot_names[scores .>= panel_thresh] .* " panel_mismatch")
     write_fasta(realigned_file*".rejected.fasta",reject_seqs,names=reject_names)
         # extracted_seqs[scores .>= panel_thresh]; # removed degap.()
         # names = annot_names[scores .>= panel_thresh])
@@ -82,7 +98,7 @@ function H704_init_template_proc(fasta_collection, panel_file,
 
     #highlighter plot and tree
     highlighter_figure(realigned_file; out_path = realigned_tre_plot_file)
-    return realigned_seqs, realigned_names
+    return realigned_seqs, realigned_names, af_cutoff
 end
 
 """

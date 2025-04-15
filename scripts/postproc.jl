@@ -1,5 +1,10 @@
+using Pkg
+Pkg.activate("./")
+Pkg.instantiate()
+Pkg.precompile()
+
 ENV["MPLBACKEND"] = "Agg"
-using PORPIDpipeline, CSV, NextGenSeqUtils, BioSequences, DataFrames, DataFramesMeta
+using PORPIDpipeline, CSV, BioSequences, DataFrames, DataFramesMeta
 import MolecularEvolution
 
 # include("../../src/functions.jl")
@@ -12,9 +17,18 @@ tag_df = CSV.read(snakemake.input[2], DataFrame)
 sample = snakemake.wildcards["sample"]
 dataset = snakemake.wildcards["dataset"]
 fs_thresh = snakemake.params["fs_thresh"]
+af_thresh = snakemake.params["af_thresh"]
 agreement_thresh = snakemake.params["agreement_thresh"]
 panel_thresh = snakemake.params["panel_thresh"]
 
+config = snakemake.params["config"]
+if "fs_override" in keys(config)
+    fs_thresh = config["fs_override"]
+end
+
+if "af_override" in keys(config)
+    af_thresh = config["af_override"]
+end
 
 #env_seqs = read_fasta("panels/env_column_stripped_panel.fasta")
 #env_profile = seqs2profile(uppercase.(env_seqs))
@@ -35,21 +49,49 @@ if !isfile(snakemake.params["panel"])
 end
 panel_file = snakemake.params["panel"]
 
-ali_seqs,seqnames = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh)
+# get af_cutoff from tags dataframe
+# sp_selected = @linq tag_df |> where(:Sample .== sample)
+# sp_artefacts = @linq sp_selected |> where(:tags .== "maybe-artefact")
+# sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
+# sp_selected = vcat(sp_artefacts, sp_reals)
+# fss = sp_selected[!,:fs]
+# af_cutoff=artefact_cutoff(fss,af_thresh)
 
+# fss = sp_selected[!,:fs]
+# af_cutoff=1
+# if length(fss)>0
+#     af_cutoff=maximum(fss)+1
+# end
+
+ali_seqs,seqnames,af_cutoff = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh, af_thresh=af_thresh)
 
 sp_selected = @linq tag_df |> where(:Sample .== sample)
 sp_selected = @linq sp_selected |> where(:tags .!= "BPB-rejects")
-fig = family_size_umi_len_stripplot(sp_selected,fs_thresh=fs_thresh)
+fig = family_size_umi_len_stripplot(sp_selected,fs_thresh=fs_thresh,
+        af_thresh=af_thresh,af_cutoff=af_cutoff)
 fig.savefig(snakemake.output[5];
     transparent = true,
     dpi = 200,
     bbox_inches = "tight")
+    
+sp_selected = @linq tag_df |> where(:Sample .== sample)
+sp_artefacts = @linq sp_selected |> where(:tags .== "maybe-artefact")
+sp_minag_rejects = @linq sp_selected |> where(:tags .== "minag-reject")
+sp_fs_rejects = @linq sp_selected |> where(:tags .== "fs<$(fs_thresh)")
+sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
+sp_selected = vcat(sp_artefacts, sp_reals, sp_minag_rejects, sp_fs_rejects)
+fig = family_size_stripplot(sp_selected,fs_thresh=fs_thresh,
+        af_thresh=af_thresh,af_cutoff=af_cutoff)
+fig.savefig(snakemake.output[6];
+    transparent = true,
+    dpi = 200,
+    bbox_inches = "tight")
+
 selected = @linq tag_df |> where(:Sample .== sample)
 gdf = DataFramesMeta.groupby(selected, :tags)
 summary = @combine gdf cols(AsTable) = ( porpid_result=first(:tags), n_UMI_families=length(:fs), n_CCS=sum(:fs) )
 # println( summary[!, [:porpid_result,:n_UMI_families,:n_CCS]] )
-CSV.write(snakemake.output[6],summary[!, [:porpid_result,:n_UMI_families,:n_CCS]])
+CSV.write(snakemake.output[7],summary[!, [:porpid_result,:n_UMI_families,:n_CCS]])
 
 umi_dir=snakemake.input[3]*"/"*sample
 umis = readdir(umi_dir)
@@ -62,7 +104,7 @@ for k in 1:length(umis)
   umis[k] = umis[k][1:j-1]
 end
 fig = di_nuc_freqs(umis, weights=weights )
-fig.savefig(snakemake.output[9];
+fig.savefig(snakemake.output[10];
   transparent = true,
   dpi = 200,
   bbox_inches = "tight")

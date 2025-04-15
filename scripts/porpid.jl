@@ -1,12 +1,23 @@
+using Pkg
+Pkg.activate("./")
+Pkg.instantiate()
+Pkg.precompile()
+
 ENV["MPLBACKEND"] = "Agg"
-using PORPIDpipeline, NextGenSeqUtils, PORPID, StatsBase,
-HypothesisTests, DataFrames, BioSequences, IterTools, CSV, FASTX
+using PORPIDpipeline, PORPID, StatsBase
+using HypothesisTests, DataFrames, BioSequences, IterTools, CSV, FASTX
 
 
 #iterate through samples, run PORPID, and filter families.
 t1 = time()
 config = snakemake.params["config"]
 fs_thresh = snakemake.params["fs_thresh"]
+
+# allow for an fs override
+if "fs_override" in keys(config)
+    fs_thresh = config["fs_override"]
+end
+
 lda_thresh = snakemake.params["lda_thresh"]
 data_dir = snakemake.input[1]
 ID = uppercase(match(r"[a-z]+", config["cDNA_primer"]).match)
@@ -15,7 +26,7 @@ umi_ix = findfirst(r"N+", config["cDNA_primer"])
 template_suffix = replace(config["cDNA_primer"][umi_ix[1]:end],
     "N" => "n")*"*"
 
-filtered_data_file = snakemake.wildcards["sample"]*".fastq"
+filtered_data_file = snakemake.wildcards["sample"]*".fastq.gz"
 templates = Dict()
 templates[snakemake.wildcards["sample"]] = ID*template_suffix #fix
 
@@ -29,8 +40,8 @@ for (name, template) in templates
     push!(cfg.templates, Template(name, template))
 end
 
-println("Processing output/$(filtered_data_file)/...")
-println("Using template $(ID*template_suffix)")
+println("$(snakemake.wildcards["sample"]): processing output/$(filtered_data_file)/...")
+println("$(snakemake.wildcards["sample"]): using template $(ID*template_suffix)")
 if isdir(snakemake.output[1])
     @error "The directory already exists! Please delete"
     #rm(snakemake.output[1], recursive=true)
@@ -49,13 +60,13 @@ my_output_func(source_file_name,
                                            score,
                                            dirname(snakemake.output[1])) #fix
 say_print_func = function(count)
-    println("Processed $(count) sequences")
+    println("$(snakemake.wildcards["sample"]): processed $(count) sequences")
 end
 # This is the slow bit
 extract_tags_from_file(cfg.files[1],
     cfg,
     my_output_func,
-    print_every=5000,
+    print_every=10000,
     print_callback=say_print_func)
 directories = collect(keys(dir_dict))
 
