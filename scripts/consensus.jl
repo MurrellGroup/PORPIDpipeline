@@ -4,7 +4,9 @@ Pkg.instantiate()
 Pkg.precompile()
 
 ENV["MPLBACKEND"] = "Agg"
-using PORPIDpipeline, RobustAmpliconDenoising, NextGenSeqUtils, CSV, DataFrames
+using PORPIDpipeline, CSV, DataFrames
+
+import RobustAmpliconDenoising
 
 function generateConsensusFromDir(dir, template_name)
     files = [dir*"/"*f for f in readdir(dir) if f[end-5:end] == ".fastq"]
@@ -21,10 +23,10 @@ function generateConsensusFromDir(dir, template_name)
 end
 
 function ConsensusFromFastq(file)
-    seqs,phreds,seq_names = read_fastq(file)
-    draft = consensus_seq(seqs)
-    draft2 = refine_ref(draft, seqs)
-    final_cons = refine_ref(draft2,seqs)
+    seqs,phreds,seq_names = PORPIDpipeline.read_fastq(file)
+    draft = RobustAmpliconDenoising.consensus_seq(seqs)
+    draft2 = RobustAmpliconDenoising.refine_ref(draft, seqs)
+    final_cons = RobustAmpliconDenoising.refine_ref(draft2,seqs)
     alignments, maps, matches, matchContent = getReadMatches(final_cons, seqs, 0)
     cons_name = split(basename(file),"_")[1]*" fs=$(length(seqs)) minag=$(round(minimum(matches); digits = 2))"
     return final_cons, cons_name
@@ -58,9 +60,9 @@ Return matches to a candidate reference from a set of reads.
 function getReadMatches(candidate_ref, reads, shift; degap_param = true, kmer_align = true)
     alignments = []
     if kmer_align
-        alignments = map(i -> kmer_seeded_align(candidate_ref, i), reads)
+        alignments = map(i -> RobustAmpliconDenoising.kmer_seeded_align(candidate_ref, i), reads)
     else
-        alignments = map(i -> nw_align(candidate_ref, i), reads)
+        alignments = map(i -> RobustAmpliconDenoising.nw_align(candidate_ref, i), reads)
     end
 
     maps = [coords(i...) for i in alignments]
@@ -85,8 +87,8 @@ to_trim = uppercase(cDNA_primer[SID_ix[1]:end])
 println("Processing $(template_name)")
 base_dir = snakemake.input[1]*"/"*template_name*"_keeping"
 seq_collection, seqname_collection = generateConsensusFromDir(base_dir, template_name)
-trimmed_collection = [primer_trim(s,to_trim) for s in seq_collection];
-write_fasta(snakemake.output[1],reverse_complement.(trimmed_collection),names = seqname_collection)
+trimmed_collection = [RobustAmpliconDenoising.primer_trim(s,to_trim) for s in seq_collection];
+PORPIDpipeline.write_fasta(snakemake.output[1],reverse_complement.(trimmed_collection),names = seqname_collection)
 
 # Update tag data with minimum_agreement and artefact rejects
 tag_df = CSV.read(snakemake.input[2], DataFrame)

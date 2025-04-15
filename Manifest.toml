@@ -2,7 +2,7 @@
 
 julia_version = "1.10.5"
 manifest_format = "2.0"
-project_hash = "2faeaa6d6df700f587ec3f208f32923eb043c1a2"
+project_hash = "8621ccb5a1c5c20723df16e220588a68758eae2f"
 
 [[deps.Accessors]]
 deps = ["CompositionsBase", "ConstructionBase", "Dates", "InverseFunctions", "MacroTools"]
@@ -567,9 +567,9 @@ version = "0.11.33"
 
 [[deps.PORPID]]
 deps = ["BioSequences", "CodecZlib", "FASTX", "JSON", "Random", "Test"]
-git-tree-sha1 = "ec308905eb73b45ffa149e3cc91bfb0359415528"
-repo-rev = "1.7.1"
-repo-url = "https://github.com/HughMurrell/PORPID.jl.git"
+git-tree-sha1 = "d5d8eff5db818740fa7c8d122a389ad01dcd8ba7"
+repo-rev = "master"
+repo-url = "https://github.com/MurrellGroup/PORPID.jl.git"
 uuid = "77e13452-6b24-11e9-337f-5707c85b7dc6"
 version = "0.1.0"
 

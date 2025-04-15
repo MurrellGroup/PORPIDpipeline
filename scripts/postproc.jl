@@ -4,7 +4,7 @@ Pkg.instantiate()
 Pkg.precompile()
 
 ENV["MPLBACKEND"] = "Agg"
-using PORPIDpipeline, CSV, NextGenSeqUtils, BioSequences, DataFrames, DataFramesMeta
+using PORPIDpipeline, CSV, BioSequences, DataFrames, DataFramesMeta
 import MolecularEvolution
 
 # include("../../src/functions.jl")

@@ -4,12 +4,11 @@ Pkg.instantiate()
 Pkg.precompile()
 
 ENV["MPLBACKEND"] = "Agg"
-using PORPIDpipeline, NextGenSeqUtils, StatsBase
+using PORPIDpipeline, StatsBase
 using BioSequences, FASTX
 using DataFrames, CSV
 using CodecZlib: GzipDecompressorStream
 using CodecZlib: GzipCompressorStream
-# include("../../src/postproc_functions.jl")
 
 println("using Julia version: $(VERSION)")
 

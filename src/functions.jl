@@ -1,16 +1,17 @@
-using NextGenSeqUtils, DPMeansClustering,
-RobustAmpliconDenoising, StatsBase,
+using DPMeansClustering,
+StatsBase,
 PyPlot, MultivariateStats,
 BioSequences, MAFFT_jll, FastTree_jll,
 Distributions,LinearAlgebra,DataFrames,CSV,
 DataFramesMeta, Seaborn,
 Compose, Colors
 
+import RobustAmpliconDenoising
 import MolecularEvolution
 
 #Extra import
 function read_fasta_with_everything(filename; seqtype=String)
-    records = NextGenSeqUtils.read_fasta_records(filename)
+    records = read_fasta_records(filename)
     return seqtype[FASTA.sequence(seqtype, r) for r in records], [FASTA.identifier(r) for r in records], [FASTA.description(r) for r in records]
 end
 
@@ -729,7 +730,7 @@ const NT_colors = [
 
 function highlighter_figure(fasta_collection; out_path = "figure.png")
     #read in and collapse
-    seqnames, ali_seqs = read_fasta_with_names(fasta_collection);
+    seqnames, ali_seqs = read_fasta(fasta_collection);
     collapsed_seqs, collapsed_sizes, collapsed_names = variant_collapse(ali_seqs; prefix = "v")
     
     if length(collapsed_seqs) > 1000

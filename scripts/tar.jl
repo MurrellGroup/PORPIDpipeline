@@ -7,41 +7,6 @@ using PORPIDpipeline, FASTX
 
 # zip porpid and postproc directories for easy download
 
-function my_read_fasta_records(filename)
-    stream = open(FASTA.Reader, filename)
-    records = FASTA.Record[]
-    for entry in stream
-        push!(records, entry)
-    end
-    return records
-end
-
-function read_fasta_with_names_and_descriptions(filename; seqtype=String)
-    records = my_read_fasta_records(filename)
-    return [FASTA.identifier(r) for r in records],
-            [FASTA.description(r) for r in records],
-             seqtype[FASTA.sequence(seqtype, r) for r in records]
-end
-
-function write_fasta(filename::String, seqs; names = String[])
-    if length(names) > 0 && (length(names) != length(seqs) )
-        error("number of sequences does not match number of names")
-    end
-    if length(names) == 0
-        names = ["seq_$i" for i in 1:length(seqs)]
-    end
-    stream = open(FASTA.Writer, filename)
-    for (name, seq) in zip(names, seqs)
-        write(stream, FASTA.Record(name, seq))
-    end
-    close(stream)
-end
-
-function degap(s::String)
-    return replace(s,"-"=>"")
-end
-
-
 dataset = snakemake.wildcards["dataset"]
 porpid_dir = "porpid/$(dataset)"
 postproc_dir = "postproc/$(dataset)"

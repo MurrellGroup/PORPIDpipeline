@@ -4,9 +4,7 @@ Pkg.instantiate()
 Pkg.precompile()
 
 ENV["MPLBACKEND"] = "Agg"
-using PORPIDpipeline, NextGenSeqUtils, BioSequences, DataFrames,CSV, DataFramesMeta
-# include("../../src/functions.jl")
-# include("../../src/contam-filter_functions.jl")
+using PORPIDpipeline, BioSequences, DataFrames, CSV, DataFramesMeta
 
 proportion_thresh = snakemake.params["proportion_thresh"]
 cluster_thresh = snakemake.params["cluster_thresh"]

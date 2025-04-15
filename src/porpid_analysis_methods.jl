@@ -1,7 +1,8 @@
 ENV["MPLBACKEND"] = "Agg"
 using PORPID, PyPlot, StatsBase, HypothesisTests,
     IterTools, DataFrames, CSV, DataFramesMeta, BioSequences
-using RobustAmpliconDenoising, NextGenSeqUtils
+
+import RobustAmpliconDenoising
 
 #=
 function unique_not_substr(a)

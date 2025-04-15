@@ -4,8 +4,8 @@ Pkg.instantiate()
 Pkg.precompile()
 
 ENV["MPLBACKEND"] = "Agg"
-using PORPIDpipeline, NextGenSeqUtils, PORPID, StatsBase,
-HypothesisTests, DataFrames, BioSequences, IterTools, CSV, FASTX
+using PORPIDpipeline, PORPID, StatsBase
+using HypothesisTests, DataFrames, BioSequences, IterTools, CSV, FASTX
 
 
 #iterate through samples, run PORPID, and filter families.
