@@ -1,3 +1,8 @@
+name = "PORPIDpipeline"
+uuid = "7caf9691-7b1e-49a7-bd1f-2a27e55f6b24"
+authors = ["Hugh Murrell <hugh.murrell@gmail.com>", "Ben Murrell <murrellb@gmail.com>", "Alec Pankow <alec.pankow@gmail.com>"]
+version = "1.10.5"
+
 [deps]
 BioSequences = "7e6ae17a-c86d-528c-b3b9-7f778a29fe59"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -28,3 +33,6 @@ RobustAmpliconDenoising = "4bd7a7d9-cbc9-5944-9319-21f5e7d2c618"
 Seaborn = "d2ef9438-c967-53ab-8060-373fdd9e13eb"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsFuns = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
+
+[compat]
+julia = "1.10.5"
