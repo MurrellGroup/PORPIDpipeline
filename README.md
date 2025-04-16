@@ -36,8 +36,14 @@ to makesure you have version 1.10.5 as your default, go here:
 [https://github.com/JuliaLang/juliaup]
 
 Once Julia is installed, make sure you can enter the julia REPL from 
-the command line and check the version number by logging out and in again and
-then from your new terminal session:
+the command line and check the version number by logging out and in again 
+
+```bash
+exit
+ssh root@.....
+```
+
+and then from your new terminal session:
 
 ```bash
 juliaup status
