@@ -420,4 +420,7 @@ An introduction to PacBio sequencing and an explanation for each *PORPIDpipeline
 is given in the set of introductory slides packaged with this repository.
 [docs/slides/PORPIDpipeline.pdf](docs/slides/PORPIDpipeline.pdf)
 
+To understand how this pipeline was designed and tested please read our
+[Optimized SMRT-UMI protocol](https://academic.oup.com/ve/article/10/1/veae019/7640831)
+paper.
 
