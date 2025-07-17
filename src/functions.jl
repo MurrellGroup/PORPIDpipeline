@@ -7,7 +7,7 @@ DataFramesMeta, Seaborn,
 Compose, Colors
 
 import RobustAmpliconDenoising
-import MolecularEvolution
+using MolecularEvolution
 
 #Extra import
 function read_fasta_with_everything(filename; seqtype=String)
@@ -456,6 +456,19 @@ function fasttree_AA(seqs,seqnames; quiet = false)
 end
 
 """
+    maximum_of_non_outliers(vec)
+    computes maximumof the vec but discarding large outliers.
+"""
+function maximum_of_non_outliers(vec)
+    sv=sort(vec,rev=true)
+    ind=1
+    while ind<length(sv) && log10(sv[ind])-log10(sv[ind+1]) > 1.5
+        ind=ind+1
+    end
+    return sv[ind]
+end
+
+"""
     artefact_cutoff(ccs_counts,af_thresh)
 Compute ccs cutoff from vector of ccs_counts and a threshold between 0 and 1
 """
@@ -466,7 +479,7 @@ function artefact_cutoff(ccs_counts,af_thresh)
     # cut=tot*af_thresh
     # cut_ind=findfirst(x->x>cut,cum_ccs)
     # af_cutoff=ccs[cut_ind]
-    af_cutoff = Int(ceil(maximum(ccs_counts)*af_thresh))
+    af_cutoff = Int(ceil(maximum_of_non_outliers(ccs_counts)*af_thresh))
     return(af_cutoff)
 end
 
@@ -484,7 +497,7 @@ function family_size_umi_len_stripplot(data;
     
 
     stripplot(y = [length(ix) for ix in data[!,:UMI]],
-        x = data[!,:fs],
+        x = (x->log2(x)).(data[!,:fs]),
         hue = data[!,:tags],
         hue_order = [
             "fs<$(fs_thresh)",
@@ -508,10 +521,10 @@ function family_size_umi_len_stripplot(data;
 
     
     # af_cutoff=artefact_cutoff(data[!,:fs], af_thresh)
-    axvline([af_cutoff-0.5],c="red",label="artefact threshold")
+    axvline([log2(af_cutoff)],c="red",label="artefact threshold") # use -0.5 when no log2
     
     aftp=af_thresh*100
-    labels = xlabel("UMI family size"), ylabel("UMI length")
+    labels = xlabel("log2 UMI family size"), ylabel("UMI length")
     #  with $(aftp)% artefact threshold (fs=$(af_cutoff))
     
     # Shrink current axis by 20%
@@ -542,9 +555,13 @@ function family_size_stripplot(data;
     fig = figure(figsize = (6,2))
     ax = PyPlot.axes()
 
-    stripplot( y = [length(ix) for ix in data[!,:UMI]],
-        x = data[!,:fs],
-        hue = data[!,:tags],
+    prune_at = maximum_of_non_outliers(data[!,:fs])
+    prune_inds = data[!,:fs] .<= prune_at
+    
+    # replacing select all ! with prune_inds
+    stripplot( y = [length(ix) for ix in data[prune_inds,:UMI]],
+        x = data[prune_inds,:fs],
+        hue = data[prune_inds,:tags],
         hue_order = [
             "fs<$(fs_thresh)",
             "maybe-artefact",
@@ -673,7 +690,7 @@ function draw_variant_tree(treestring, rename_func, filepath)
     dot_size_dict = Dict()
     all_sizes = []
     for n in getleaflist(newt)
-        dot_size_dict[n] = sqrt(get_size(n.name))
+        dot_size_dict[n] = sqrt(get_size(n.name))/4  # used to be sqrt
         push!(all_sizes,get_size(n.name))
     end
     tot_size = sum(all_sizes)
@@ -729,6 +746,7 @@ const NT_colors = [
 ]
 
 function highlighter_figure(fasta_collection; out_path = "figure.png")
+
     #read in and collapse
     seqnames, ali_seqs = read_fasta(fasta_collection);
     collapsed_seqs, collapsed_sizes, collapsed_names = variant_collapse(ali_seqs; prefix = "v")
@@ -753,7 +771,7 @@ function highlighter_figure(fasta_collection; out_path = "figure.png")
         dot_size_dict = Dict()
         all_sizes = []
         for n in MolecularEvolution.getleaflist(rerooted)
-            dot_size_dict[n] = sqrt(get_size(n.name))
+            dot_size_dict[n] = sqrt(get_size(n.name))  # used to be sqrt
             push!(all_sizes,get_size(n.name))
         end
         tot_size = sum(all_sizes)
@@ -770,7 +788,9 @@ function highlighter_figure(fasta_collection; out_path = "figure.png")
         img = MolecularEvolution.highlighter_tree_draw(rerooted, uppercase.(collapsed_seqs), collapsed_names, uppercase(collapsed_seqs[1]);
             legend_colors = NT_colors, legend_padding = 1cm,
             tree_args = [:line_width => 0.2mm, :font_size => 1, :dot_size_dict => dot_size_dict, :label_color_dict => color_dict,
-                :dot_color_dict => color_dict, :max_dot_size => 0.1, :dot_opacity => 0.6, :name_opacity => 0.8])
+                :dot_color_dict => color_dict, :max_dot_size => 0.03, :dot_opacity => 0.6, :name_opacity => 0.8])
+        
+        
         compose(context(0.05,0.01,0.95,0.99), img) |> SVG(out_path, 20cm, 20cm)
     end
 end

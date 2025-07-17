@@ -11,7 +11,7 @@ import RobustAmpliconDenoising
 function generateConsensusFromDir(dir, template_name)
     files = [dir*"/"*f for f in readdir(dir) if f[end-5:end] == ".fastq"]
     if length(files) > 0
-        println("Generating consensus for $(length(files)) templates")
+        println("Generating $(template_name) consensus for $(length(files)) templates")
     else
         println("WARNING: no template families for $(template_name)")
         exit()
@@ -129,4 +129,4 @@ println("$(template_name): labelling $(art_count) families with fs under $(af_cu
 CSV.write(snakemake.output[2], sort!(tag_df, [:Sample, :tags, :fs], rev = [false, false, true]));
 
 t2 = time()
-println("Consensus generation took $(t2-t1) seconds.")
+println("Consensus generation for $(template_name) took $(t2-t1) seconds.")

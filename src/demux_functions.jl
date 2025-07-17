@@ -21,7 +21,7 @@ function pp_demux_dict(names, seqs, fwd_primers, rev_primers, reject_trim_writer
     sorted_pairs = sort([(k,pair_counts[k]) for k in keys(pair_counts)])
     if verbose
         for s in sorted_pairs
-            @show s
+            # @show s
         end
     end
 
@@ -110,6 +110,9 @@ function iterative_primer_match(seqs,full_primers,
         unresolved = filter .== 0
         primers = [p[i:min(i + window - 1,minimum(length.(full_primers)))] for p in full_primers]
         filter[unresolved] = fast_primer_match(seqs[unresolved],primers,tol_one_error=tol_one_error);
+        if verbose
+            # @show primers, sum(unresolved)
+        end
     end
     return filter
 end
@@ -126,7 +129,7 @@ function sliding_demux_dict(names,seqs,fwd_primers,window::Int,slide_by::Int,rej
     sorted_pairs = sort([(k,pair_counts[k]) for k in keys(pair_counts)])
     if verbose
         for s in sorted_pairs
-            @show s
+            # @show s
         end
     end
     if phreds == nothing
@@ -334,7 +337,7 @@ function chunked_quality_demux(chunk, chunk_size, seqs, phreds, names,
     rev_adapter = longest_conserved_5p(rev_adapters)
     rev_adapter = String(split(rev_adapter,r"[a-z]")[1]) #if all contain sample ID keep sample ID
     if verbose
-        @show rev_adapter
+        # @show rev_adapter
     end
     #sliding window demultiplex on forward primers
     fwd_demux_dic = sliding_demux_dict(names, seqs,
@@ -347,9 +350,9 @@ function chunked_quality_demux(chunk, chunk_size, seqs, phreds, names,
                                        demux_dir = demux_dir)
     #iterate by each forward primer group
     if verbose
-        @show keys(fwd_demux_dic)
+        # @show keys(fwd_demux_dic)
         @show unique_fwd_ends
-        @show unique(fwd_end_group_arr)
+        # @show unique(fwd_end_group_arr)
     end
     for j in unique(fwd_end_group_arr)
         #define templates
