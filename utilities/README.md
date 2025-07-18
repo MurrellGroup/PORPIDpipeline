@@ -7,8 +7,10 @@ using primers known to reside in the dataset.
 
 usage:
 ```
-julia poretrim.jl infile.fastq.gz outfile.fastq.gz fwd_primer rev_primer
+julia poretrim.jl infile.fastq.gz outfile.fastq.gz fwd_primer rev_primer primer_discards.fastq.gz length_discards.fastq.gz
 ```
+
+The first four parameters are mandatory but the last two are optional.
 
 for example:
 ```
@@ -18,15 +20,15 @@ julia poretrim.jl infile.fastq.gz outfile.fastq.gz TAGGCATCTCCTATGGCAGGAAGAA CCG
 the tool will read sequence records, search for the forward and reverse primers,
 and output a sequence record with the sequence trimmed upto but not including the primers.
 If the primer pair is not found the reverse complement sequence is searched and
-if still not found the sequence is discarded.
+if still not found the sequence is discarded and written to the discard files if provided on the command line.
 
-The tool reports every 10K sequences found and at the end produces a histogram 
+The tool reports every 10K sequences with matching primers and the tool produces a histogram 
 displaying various sequence counts such as the one below.
 
 ![trimcounts](Pool1_Nanopore_trimmed_trimcounts.png)
 
-When you first run the tool, julia will use the Manifest and Porject files to install
-the required libraries locally. Thereafter run times should improve.
+When you first run the tool, julia will use the `Manifest` and `Project` files in this `utilities` 
+directory to install the required libraries locally. Thereafter run times should improve.
 
 This is still a work in progress
 

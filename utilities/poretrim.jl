@@ -37,18 +37,28 @@ function findbestlast(query,tol,window)
     return best
 end
 
-function nanopore_trim(in_file,out_file,top,bot; window=150, tol=2)
+function nanopore_trim(in_file,out_file,top,bot;
+                            window=150, tol=2,
+                            primer_discard_file=nothing,
+                            length_discard_file=nothing)
     reader = FASTQ.Reader(GzipDecompressorStream(open(in_file)))
     count=0
+    discard_count=0
     top_chop_count=0
     bot_chop_count=0
     both_chop_count=0
     rev_count=0
-    sf_count=0
+    short_long_count=0
     seqs=[]
     tps=[]
     bps=[]
     writer = FASTQ.Writer(GzipCompressorStream(open(out_file,"w")))
+    if !isnothing(primer_discard_file)
+        primer_discard_writer = FASTQ.Writer(GzipCompressorStream(open(primer_discard_file,"w")))
+    end
+    if !isnothing(length_discard_file)
+        length_discard_writer = FASTQ.Writer(GzipCompressorStream(open(length_discard_file,"w")))
+    end
     query_top=ApproximateSearchQuery(LongDNA{4}(top))
     query_bot=ApproximateSearchQuery(LongDNA{4}(bot))
     while !eof(reader)
@@ -101,25 +111,43 @@ function nanopore_trim(in_file,out_file,top,bot; window=150, tol=2)
                 push!(tps,start)
                 push!(bps,stop)
                 if both_chop_count % 10000 == 0
-                    @show both_chop_count, count, top_chop_count, bot_chop_count, rev_count
+                    @show both_chop_count, count, top_chop_count, bot_chop_count, rev_count, discard_count, short_long_count
+                end
+            else
+                discard_count += 1
+                if !isnothing(primer_discard_file)
+                    nam="primer_discard_$(discard_count)"
+                    record_fastq = FASTQRecord(nam, reverse_complement(seq),reverse(qual))
+                    write(primer_discard_writer, record_fastq)
                 end
             end
         else
-            sf_count += 1
+            short_long_count += 1
+            if !isnothing(length_discard_file)
+                nam="length_discard_$(short_long_count)"
+                record_fastq = FASTQRecord(nam, reverse_complement(seq),reverse(qual))
+                write(length_discard_writer, record_fastq)
+            end
         end
     end
-    @show count, top_chop_count, bot_chop_count, both_chop_count, rev_count
+    @show count, top_chop_count, bot_chop_count, both_chop_count, rev_count, short_long_count, discard_count
     close(reader)
     close(writer)
-    return seqs,tps,bps,count,sf_count
+    if !isnothing(primer_discard_file)
+        close(primer_discard_writer)
+    end
+    if !isnothing(length_discard_file)
+        close(length_discard_writer)
+    end
+    return seqs,tps,bps,count,discard_count,short_long_count
 end
 
 ##################### main script starts here ##############################
 
 if length(ARGS) < 4
     println("************************* usage error **************************")
-    println("usage: julia nanotrim.jl in_file out_file fwd_primer rev_primer")
-    println("   eg: julia nanotrim.jl ../raw-reads/Pool1_nanopore.fastq.gz ./Pool1_nanopore_trimmed.fastq.gz TAGGCATCTCCTATGGCAGGAAGAA CCGCTCCGTCCGACGACTCACTATA")
+    println("usage: julia poretrim.jl in_file out_file fwd_primer rev_primer primer_discard_file length_discard_file")
+    println("   eg: julia poretrim.jl ../raw-reads/Pool1_nanopore.fastq.gz ./Pool1_nanopore_trimmed.fastq.gz TAGGCATCTCCTATGGCAGGAAGAA CCGCTCCGTCCGACGACTCACTATA primer_discards.fastq.gz length_discards.fastq.gz")
     println("************************* usage error **************************")
     exit()
 end
@@ -128,12 +156,15 @@ in_file=ARGS[1]
 out_file=ARGS[2]
 fwd_primer=ARGS[3]
 rev_primer=ARGS[4]
+length(ARGS) > 4 ? primer_discard_file=ARGS[5] : primer_discard_file=nothing
+length(ARGS) > 5 ? length_discard_file=ARGS[6] : length_discard_file=nothing
 
 t1 = time()
 
 window=1000
 tol=2
-trim_seqs,tps,bps,count,sf = nanopore_trim(in_file,out_file,fwd_primer,rev_primer,window=window,tol=tol)
+trim_seqs,tps,bps,count,discard_count, short_long_count = nanopore_trim(in_file,out_file,fwd_primer,rev_primer,
+                            window=window,tol=tol,primer_discard_file=primer_discard_file,length_discard_file=length_discard_file)
 
 res=primer_peek(trim_seqs,N=6,keep=4,L=min(length(fwd_primer),length(rev_primer)))
 
@@ -142,9 +173,9 @@ t2 = time()
 dt=Int( floor( (t2-t1)/60 ) )
 
 histogram(length.(trim_seqs[1:100:end]), label="seq_length",
-    xlabel="$(length(trim_seqs)) seqs from $(count) with $(sf) size filtered \n " *
+    xlabel="$(length(trim_seqs)) seqs from $(count) \n with $(short_long_count) size filtered and $(discard_count) primer filtered\n " *
         " with $(window) search window and $(tol) match tolerance in $(dt) minutes",
-    title="Nanopore trimming \n" * "$(res[1]) \n $(res[2]) \n" )
+    title="poretrim filtering \n" * "$(res[1]) \n $(res[2]) \n" )
             
 histogram!(tps[1:100:end],label=" 0 + fwd_trim")
 histogram!((2*window) .- bps[1:100:end],label="2k - rev_trim")
