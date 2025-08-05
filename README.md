@@ -139,7 +139,7 @@ porpid_archive = "part"  # default "full", use "part" for partial archive
 
 The three `primer` parameters for the `demux` rule are new. They allow the
 user to set the *tolerance* for primer matching, the *window* size for
-where to search for primers and the number of neuceotides to *chop*
+how far in to search for primers and the number of nucleotides to *chop*
 from the primer specification when searching for primers. These parameters
 have been introduced to enable the `demux` to work with Nanopore datasets.
 
