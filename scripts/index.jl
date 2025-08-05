@@ -41,6 +41,7 @@ demux_tbl = format_tbl(demux_df)
 cfg = snakemake.params["config"]
 fs_thresh = snakemake.params["fs_thresh"]
 af_thresh = snakemake.params["af_thresh"]
+q_thresh = snakemake.params["q_thresh"]
 seq_counts_df = DataFrame(Sample = [], fs_used = [], af_used = [], Porpid_Seqs = [],
             Rej_Artefact = [], Rej_Min_Ag = [], Rej_Panel = [], Rej_Seqs = [], Final_Seqs = [])
 for sample in sort(snakemake.params["SAMPLES"])
@@ -152,6 +153,9 @@ html_str = html_str_hdr * """
               <li> error_rate = $(snakemake.params["error_rate"]) </li>
               <li> min_length = $(snakemake.params["min_length"]) </li>
               <li> max_length = $(snakemake.params["max_length"]) </li>
+              <li> primer_tol = $(snakemake.params["primer_tol"]) </li>
+              <li> primer_window = $(snakemake.params["primer_window"]) </li>
+              <li> primer_chop = $(snakemake.params["primer_chop"]) </li>
               <li> max_reads = $(snakemake.params["max_reads"]) </li>
             </ul>
 """
@@ -223,6 +227,7 @@ html_str = html_str * """
     <ul>
       <li> fs_thresh = $(snakemake.params["fs_thresh"]) </li>
       <li> af_thresh = $(snakemake.params["af_thresh"]) </li>
+      <li> q_thresh = $(snakemake.params["q_thresh"]) </li>
       <li> lda_thresh = $(snakemake.params["lda_thresh"]) </li>
       <li> agreement_thresh = $(snakemake.params["agreement_thresh"]) </li>
       <li> panel_thresh = $(snakemake.params["panel_thresh"]) </li>

@@ -90,41 +90,24 @@ seq_collection, seqname_collection = generateConsensusFromDir(base_dir, template
 trimmed_collection = [RobustAmpliconDenoising.primer_trim(s,to_trim) for s in seq_collection];
 PORPIDpipeline.write_fasta(snakemake.output[1],reverse_complement.(trimmed_collection),names = seqname_collection)
 
-# Update tag data with minimum_agreement and artefact rejects
+# First update tag data with minimum_agreement scores
 tag_df = CSV.read(snakemake.input[2], DataFrame)
+tag_df.minag .= 0.0
 
-# first do min agrement filter
-agreement_thresh = snakemake.params["agreement_thresh"]
-minagrs=(x->parse(Float64,split(split(x," ")[3],"=")[2])).(seqname_collection)
-minagr_rejects = (x->split(x," ")[1][end-7:end]).(seqname_collection[minagrs .< agreement_thresh])
-minag_count=0
+minagrs=(x->( split(x," ")[1][end-7:end], parse(Float64,split(split(x," ")[3],"=")[2]) )).(seqname_collection)
+
+# minagr_records = (x->split(x," ")[1][end-7:end]).(seqname_collection)
 for row in eachrow(tag_df)
-    if row[:tags] == "likely_real" && row[:UMI] in minagr_rejects
-        row[:tags]="minag-reject"
-        global minag_count+=1
+    if row[:tags] == "likely_real"
+        for (umi,minag) in minagrs
+            if row[:UMI] == umi
+                row[:minag] = minag
+            end
+        end
     end
 end
-println("$(template_name): labelling $(minag_count) families as minag-reject")
+println("$(template_name): tag file updated with minag scores")
 
-
-# now rename possible artefacts
-af_thresh = snakemake.params["af_thresh"]
-
-# allow for an af override
-if "af_override" in keys(config)
-    af_thresh = config["af_override"]
-end
-
-ccs=tag_df[tag_df[!,:tags].=="likely_real",:fs]
-af_cutoff=artefact_cutoff(ccs,af_thresh)
-art_count=0
-for row in eachrow(tag_df)
-   if row[:tags] == "likely_real" && row[:fs]<af_cutoff
-        row[:tags]="maybe-artefact"
-        global art_count+=1
-   end
-end
-println("$(template_name): labelling $(art_count) families with fs under $(af_cutoff) as maybe-artefact")
 
 CSV.write(snakemake.output[2], sort!(tag_df, [:Sample, :tags, :fs], rev = [false, false, true]));
 

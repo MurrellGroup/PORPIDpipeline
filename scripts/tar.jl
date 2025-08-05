@@ -66,6 +66,7 @@ t3f = time()
 println("postproc archiving took $(t3f - t3s) seconds.")
 
 porpid_archive_flag = snakemake.params["porpid_archive"]
+@show porpid_archive_flag
 if porpid_archive_flag == "full"
     # now rename porpid_dir, tar and zip and rename back
     println("archiving FULL porpid directory ...")
@@ -87,7 +88,7 @@ else
     run(`cp $(porpid_dir)/contam_suspect.csv $(porpid_dir)-porpid`)
     run(`cp -r $(porpid_dir)/demux $(porpid_dir)-porpid`)
     run(`cp -r $(porpid_dir)/tags $(porpid_dir)-porpid`)
-    run(`cp -r $(porpid_dir)/tags_filtered $(porpid_dir)-porpid`)
+    run(`cp -r $(porpid_dir)/tags_minags $(porpid_dir)-porpid`)
     run(`cp -r $(porpid_dir)/consensus $(porpid_dir)-porpid`)
     run(`cp -r $(porpid_dir)/contam_passed $(porpid_dir)-porpid`)
     run(`cp -r $(porpid_dir)/contam_failed $(porpid_dir)-porpid`)

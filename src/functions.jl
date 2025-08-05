@@ -459,27 +459,29 @@ end
     maximum_of_non_outliers(vec)
     computes maximumof the vec but discarding large outliers.
 """
-function maximum_of_non_outliers(vec)
-    sv=sort(vec,rev=true)
-    ind=1
-    while ind<length(sv) && log10(sv[ind])-log10(sv[ind+1]) > 1.5
-        ind=ind+1
-    end
-    return sv[ind]
+function maximum_of_non_outliers(vec,q_thresh)
+    # sv=sort(vec,rev=true)
+    # ind=1
+    # while ind<length(sv) && log10(sv[ind])-log10(sv[ind+1]) > 1.5
+    #     ind=ind+1
+    # end
+    # return sv[ind]
+    return quantile(vec,q_thresh)
 end
 
 """
-    artefact_cutoff(ccs_counts,af_thresh)
-Compute ccs cutoff from vector of ccs_counts and a threshold between 0 and 1
+    artefact_cutoff(ccs_counts,af_thresh,q_thresh)
+    Compute ccs cutoff from vector of ccs_counts
+    and an threshold between 0 and 1
 """
-function artefact_cutoff(ccs_counts,af_thresh)
+function artefact_cutoff(ccs_counts,af_thresh,q_thresh)
     # ccs=sort(ccs_counts)
     # tot=sum(ccs)
     # cum_ccs=cumsum(ccs)
     # cut=tot*af_thresh
     # cut_ind=findfirst(x->x>cut,cum_ccs)
     # af_cutoff=ccs[cut_ind]
-    af_cutoff = Int(ceil(maximum_of_non_outliers(ccs_counts)*af_thresh))
+    af_cutoff = Int(ceil(maximum_of_non_outliers(ccs_counts,q_thresh)*af_thresh))
     return(af_cutoff)
 end
 
@@ -489,7 +491,7 @@ Draws a stripplot of family sizes vs. UMI length from an input
 DataFrame. Returns the figure object.
 """
 function family_size_umi_len_stripplot(data;
-                    fs_thresh=5, af_thresh=0.15, af_cutoff=1)
+                    fs_thresh=5, af_thresh=0.25, q_thresh=0.99, af_cutoff=1)
     tight_layout()
     fig = figure(figsize = (6,2))
     ax = PyPlot.axes()
@@ -550,12 +552,12 @@ Draws a stripplot of family sizes with large jitter for maybe-artefact
 and likely_real from an input DataFrame. Returns the figure object.
 """
 function family_size_stripplot(data;
-                    fs_thresh=5, af_thresh=0.15, af_cutoff=1)
+                    fs_thresh=5, af_thresh=0.15, q_thresh=0.99, af_cutoff=1)
     tight_layout()
     fig = figure(figsize = (6,2))
     ax = PyPlot.axes()
 
-    prune_at = maximum_of_non_outliers(data[!,:fs])
+    prune_at = maximum_of_non_outliers(data[!,:fs],q_thresh)
     prune_inds = data[!,:fs] .<= prune_at
     
     # replacing select all ! with prune_inds
@@ -572,17 +574,17 @@ function family_size_stripplot(data;
         
     ccs = data[ (data[!,:tags].=="likely_real") .|| (data[!,:tags].=="maybe-artefact"), :fs]
     
-    af_cutoff=artefact_cutoff(ccs, af_thresh)
+    af_cutoff=artefact_cutoff(ccs, af_thresh, q_thresh)
     
     axvline([af_cutoff-0.5],c="red",label="artefact threshold")
     
     for afths in 0.05:0.1:0.85
-        afc=artefact_cutoff(ccs, afths)
+        afc=artefact_cutoff(ccs, afths, q_thresh)
         axvline([afc-0.5],alpha=1.0)
     end
     
     afths=0.95
-    afc=artefact_cutoff(ccs, afths)
+    afc=artefact_cutoff(ccs, afths, q_thresh)
     axvline([afc-0.5],alpha=1.0,label="5% 15% ... 95%")
     
     axvline([af_cutoff-0.5],c="red")

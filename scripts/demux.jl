@@ -29,6 +29,9 @@ f_kwargs = [
     :error_rate => snakemake.params["error_rate"],
     :min_length => snakemake.params["min_length"],
     :max_length => snakemake.params["max_length"],
+    :primer_tol => snakemake.params["primer_tol"],
+    :primer_window => snakemake.params["primer_window"],
+    :primer_chop => snakemake.params["primer_chop"],
     :label_prefix => "seq",
     :error_out => true
     ]
@@ -156,7 +159,8 @@ CSV.write("$(snakemake.output[3])", df_demux_sampled)
 CSV.write("$(snakemake.output[4])", df_reject)
 
 # save a quality_filter report
-# no_of_fails = no_of_reads - no_assigned # fix this, get chunked_filter_apply to return no_of_fails
+# no_of_fails = no_of_reads - no_assigned
+# fix this, get chunked_filter_apply to return no_of_fails
 df_qual = DataFrame(Description = [], Count = [])
 push!(df_qual,["Initial number of raw reads",total_reads])
 push!(df_qual,["Number of quality reads",quality_reads])

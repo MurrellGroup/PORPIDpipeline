@@ -2,13 +2,13 @@
 """
     function H704_init_template_proc(fasta_collection, panel_file,
       mds_plot_file, apobec_file, realigned_tre_plot_file, realigned_file;
-      agreement_thresh=0.7,panel_thresh=50, af_thresh=0.15)
+      agreement_thresh=0.7,panel_thresh=50, af_thresh=0.25, q_thresh=0.99)
 Given a fasta collection, filter, produce and write mafft alignments,
 MDS plots with APOBEC model, and save MolEv phylogeny.
 """
 function H704_init_template_proc(fasta_collection, panel_file,
       mds_plot_file, apobec_file, realigned_tre_plot_file, realigned_file;
-      agreement_thresh=0.7, panel_thresh=50, af_thresh=0.15) #, af_cutoff=1)
+      agreement_thresh=0.7, panel_thresh=50, af_thresh=0.25, q_thresh=0.99 ) #, af_cutoff=1)
     reject_df = DataFrame(reject_reason=String[],threshold=Float64[],count=Int64[])
     f = fasta_collection
     #align consensus
@@ -31,7 +31,7 @@ function H704_init_template_proc(fasta_collection, panel_file,
     agreement_scores = agreement_scores[agreement_scores .>= agreement_thresh]
     
     # calculate af_cutoff after discarding seq that dont meet minimum agreement
-    af_cutoff = artefact_cutoff(sizes,af_thresh)
+    af_cutoff = artefact_cutoff(sizes,af_thresh,q_thresh)
     
     # filter artefacts
     push!(reject_df,["ccs_count < artefact cutoff",af_cutoff,sum(sizes .< af_cutoff)])

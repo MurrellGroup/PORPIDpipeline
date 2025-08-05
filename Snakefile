@@ -33,24 +33,30 @@ def bottle2_input(wildcards):
 # PORPIDpipeline parameters
 # demux
 chunk_size = 100000      # default 100000
-error_rate = 0.02        # default 0.01
+error_rate = 0.01        # default 0.01
 min_length = 2100        # default 2100
 max_length = 4300        # default 4300
+primer_tol = 1           # default 1 (allow 1 error when locating primers)
+primer_window = 100      # default 100 (search for primers in first 100 nucs)
+primer_chop = 0          # default 0 (reduce primers by 0 nucs)
 max_reads = 100000       # default 100000 reads per sample,
                          # use something large for no downsampling
-verbose = "true"        # default "false", use "true" to debug demux
+verbose = "true"         # default "false", use "true" to debug demux
 #porpid
-fs_thresh = 5            # default 1 (or 5 if af_thresh is 0)
+fs_thresh = 1            # default 1 (or 5 if af_thresh is 0)
 lda_thresh = 0.995       # default 0.995
 #consensus
-agreement_thresh = 0.6   # default 0.7
-af_thresh = 0.0          # default 0.35 (drops smallest 35% of CCS reads)
 #contam
 cluster_thresh = 0.015   # default 0.015
 proportion_thresh = 0.2  # default 0.2
 dist_thresh = 0.015      # default 0.015
 contam_toggle = "on"     # default "on", use "off" to disable
 #postproc
+agreement_thresh = 0.7   # default 0.7
+af_thresh = 0.25         # default 0.25 (drops smallest 25% of CCS reads)
+q_thresh = 0.99          # quantile threshold to eliminate large outliers
+                         # from artifact filter computation
+                         # (0.99 sets max_fs at the 1% mark)
 panel_thresh = 40        # default 50
 #tar
 degap = "true"           # default "true", use "false" to disable
@@ -77,6 +83,9 @@ rule demux:
         error_rate = error_rate,
         min_length = min_length,
         max_length = max_length,
+        primer_tol = primer_tol,
+        primer_window = primer_window,
+        primer_chop = primer_chop,
         max_reads = max_reads,
         verbose = verbose,
         config = lambda wc: config[wc.dataset]
@@ -112,11 +121,9 @@ rule consensus:
         "porpid/{dataset}/bottle1_report.csv"
     output:
         "porpid/{dataset}/consensus/{sample}.fasta",
-        "porpid/{dataset}/tags_filtered/{sample}.csv"
+        "porpid/{dataset}/tags_minags/{sample}.csv"
     params:
-        config = lambda wc: config[wc.dataset][wc.sample],
-        af_thresh = af_thresh,
-        agreement_thresh = agreement_thresh
+        config = lambda wc: config[wc.dataset][wc.sample]
     script:
         "scripts/consensus.jl"
 
@@ -140,7 +147,7 @@ rule contam:
 rule postproc:
     input:
         "porpid/{dataset}/contam_passed",
-        "porpid/{dataset}/tags_filtered/{sample}.csv",
+        "porpid/{dataset}/tags_minags/{sample}.csv",
         "porpid/{dataset}/porpid/{sample}.fastq.gz"
     output:
         report("postproc/{dataset}/{sample}/{sample}.fasta.mds.png", category = "postproc", caption = "report-rst/mds.rst"),
@@ -152,11 +159,13 @@ rule postproc:
         "postproc/{dataset}/{sample}/{sample}_qc_bins.csv",
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.fasta",
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.csv",
-        report("postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png", category = "postproc", caption = "report-rst/di_nuc_freq.rst")
+        report("postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png", category = "postproc", caption = "report-rst/di_nuc_freq.rst"),
+        "postproc/{dataset}/{sample}/{sample}_tags_filtered.csv"
     params:
         config = lambda wc: config[wc.dataset][wc.sample],
         panel = lambda wc: config[wc.dataset][wc.sample]["panel"],
         af_thresh = af_thresh,
+        q_thresh = q_thresh,
         fs_thresh = fs_thresh,
         agreement_thresh = agreement_thresh,
         panel_thresh = panel_thresh
@@ -204,12 +213,16 @@ rule index:
         error_rate = error_rate,
         min_length = min_length,
         max_length = max_length,
+        primer_tol = primer_tol,
+        primer_window = primer_window,
+        primer_chop = primer_chop,
         max_reads = max_reads,
         proportion_thresh =proportion_thresh,
         cluster_thresh = cluster_thresh,
         dist_thresh = dist_thresh,
         fs_thresh = fs_thresh, 
         af_thresh = af_thresh,
+        q_thresh = q_thresh,
         lda_thresh = lda_thresh,
         agreement_thresh = agreement_thresh,
         panel_thresh = panel_thresh,

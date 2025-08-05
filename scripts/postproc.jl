@@ -7,17 +7,13 @@ ENV["MPLBACKEND"] = "Agg"
 using PORPIDpipeline, CSV, BioSequences, DataFrames, DataFramesMeta
 import MolecularEvolution
 
-# include("../../src/functions.jl")
-# include("../../src/apobec_model.jl")
-# include("../../src/molev_functions.jl")
-# include("../../src/postproc_functions.jl")
-
 fasta_collection = snakemake.input[1]*"/"*snakemake.wildcards["sample"]*".fasta"
-tag_df = CSV.read(snakemake.input[2], DataFrame)
+
 sample = snakemake.wildcards["sample"]
 dataset = snakemake.wildcards["dataset"]
 fs_thresh = snakemake.params["fs_thresh"]
 af_thresh = snakemake.params["af_thresh"]
+q_thresh = snakemake.params["q_thresh"]
 agreement_thresh = snakemake.params["agreement_thresh"]
 panel_thresh = snakemake.params["panel_thresh"]
 
@@ -29,12 +25,9 @@ end
 if "af_override" in keys(config)
     af_thresh = config["af_override"]
 end
-
-#env_seqs = read_fasta("panels/env_column_stripped_panel.fasta")
-#env_profile = seqs2profile(uppercase.(env_seqs))
-
-#re_seqs = read_fasta("panels/HIV1_COM_2017_5970-8795_DNA_stripped.fasta")
-#re_profile = seqs2profile(uppercase.(re_seqs))
+if "q_override" in keys(config)
+    q_thresh = config["q_override"]
+end
 
 # check for fasta collection
 if !isfile(fasta_collection)
@@ -49,26 +42,41 @@ if !isfile(snakemake.params["panel"])
 end
 panel_file = snakemake.params["panel"]
 
-# get af_cutoff from tags dataframe
-# sp_selected = @linq tag_df |> where(:Sample .== sample)
-# sp_artefacts = @linq sp_selected |> where(:tags .== "maybe-artefact")
-# sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
-# sp_selected = vcat(sp_artefacts, sp_reals)
-# fss = sp_selected[!,:fs]
-# af_cutoff=artefact_cutoff(fss,af_thresh)
 
-# fss = sp_selected[!,:fs]
-# af_cutoff=1
-# if length(fss)>0
-#     af_cutoff=maximum(fss)+1
-# end
+# update tag data with minimum_agreement and artefact rejects
+tag_df = CSV.read(snakemake.input[2], DataFrame)
 
-ali_seqs,seqnames,af_cutoff = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh, af_thresh=af_thresh)
+# first do min agrement filter
+minag_count=0
+for row in eachrow(tag_df)
+    if row[:tags] == "likely_real" && row[:minag] < agreement_thresh
+        row[:tags]="minag-reject"
+        global minag_count+=1
+    end
+end
+println("$(sample): labelling $(minag_count) families as minag-reject")
+
+
+# now rename possible artefacts
+ccs=tag_df[tag_df[!,:tags].=="likely_real",:fs]
+af_cutoff=artefact_cutoff(ccs,af_thresh,q_thresh)
+art_count=0
+for row in eachrow(tag_df)
+   if row[:tags] == "likely_real" && row[:fs]<af_cutoff
+        row[:tags]="maybe-artefact"
+        global art_count+=1
+   end
+end
+println("$(sample): labelling $(art_count) families with fs under $(af_cutoff) as maybe-artefact")
+
+CSV.write(snakemake.output[11], sort!(tag_df, [:Sample, :tags, :fs], rev = [false, false, true]));
+
+ali_seqs,seqnames,af_cutoff = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh, af_thresh=af_thresh,q_thresh=q_thresh)
 
 sp_selected = @linq tag_df |> where(:Sample .== sample)
 sp_selected = @linq sp_selected |> where(:tags .!= "BPB-rejects")
 fig = family_size_umi_len_stripplot(sp_selected,fs_thresh=fs_thresh,
-        af_thresh=af_thresh,af_cutoff=af_cutoff)
+        af_thresh=af_thresh,q_thresh=q_thresh,af_cutoff=af_cutoff)
 fig.savefig(snakemake.output[5];
     transparent = true,
     dpi = 200,
@@ -81,7 +89,7 @@ sp_fs_rejects = @linq sp_selected |> where(:tags .== "fs<$(fs_thresh)")
 sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
 sp_selected = vcat(sp_artefacts, sp_reals, sp_minag_rejects, sp_fs_rejects)
 fig = family_size_stripplot(sp_selected,fs_thresh=fs_thresh,
-        af_thresh=af_thresh,af_cutoff=af_cutoff)
+        af_thresh=af_thresh,q_thresh=q_thresh,af_cutoff=af_cutoff)
 fig.savefig(snakemake.output[6];
     transparent = true,
     dpi = 200,
