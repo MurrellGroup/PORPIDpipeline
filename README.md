@@ -64,12 +64,12 @@ for further details concerning `juliaup` go here:
 
 [https://github.com/JuliaLang/juliaup?tab=readme-ov-file#using-juliaup]
 
-### cloning the PORPIDpipeline repository
+### cloning the nanopore branch of the PORPIDpipeline repository
 
 Now that the dependencies are setup we clone the PORPIDpipeline repository
 
 ```bash
-git clone https://github.com/MurrellGroup/PORPIDpipeline.git
+git clone -b nanopore https://github.com/MurrellGroup/PORPIDpipeline.git
 ```
 
 ### setting up the Julia package environment
@@ -239,9 +239,12 @@ For more info on Snakemake, see:
 
 [https://snakemake.readthedocs.io/en/stable/]
 
-## Conda setup
+<details>
+<summary>
+### Conda setup
 
 Some (without root access) may prefer to setup PORPIDpipeline in a **conda** environment.
+</summary>
 
 To accomplish this, first install `anaconda` locally. (the install script allows you to choose
 the location for anaconda, by default `/home/user` but choose something else if
@@ -293,12 +296,15 @@ conda activate PORPIDpipeline
 ```
 
 and continue with the `julia` package environment setup as outlined above in the *quick start* section.
-
-## Cluster setup
+</details>
+<details>
+<summary>
+###  Cluster setup
 
 Seting up a `snakemake` pipeline on a cluster is a *dark* art. Here we describe an attempt
 at installing PORPIDpipeline on a two node cluster, (one node a *controller* node with 16 cores
 and the other node a *compute* node with 64 cores).
+</summary>
 
 **Firstly**, since the cluster administrator is hardly likely to give you root access we
 suggest you follow the `conda` installation for PORPIDpipeline. If you expect more
@@ -428,16 +434,22 @@ of cores needed for each step in the pipeline.
 
 We have not attempted this yet, and it would probably require writing a
 `slurm` efficient version of the `snakefile`. 
+</details>
 
 ## Documentation
 
 
 
-An introduction to PacBio sequencing and an explanation for each *PORPIDpipeline* rule 
-is given in the set of introductory slides packaged with this repository.
+An introduction to PacBio sequencing and an explanation for each 
+*PORPIDpipeline* rule is given in the set of introductory slides 
+packaged with this repository.
 [docs/slides/PORPIDpipeline.pdf](docs/slides/PORPIDpipeline.pdf)
 
 To understand how this pipeline was designed and tested please read our
 [Optimized SMRT-UMI protocol](https://academic.oup.com/ve/article/10/1/veae019/7640831)
 paper.
+
+A **report** on the adaption of PORPIDpipeline to cater for Nanopore datasets
+can be found here:
+[docs/reports/NanoporeReport.pdf](docs/reports/NanoporeReport.pdf)
 
