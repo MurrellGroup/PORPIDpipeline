@@ -557,12 +557,14 @@ function family_size_stripplot(data;
     fig = figure(figsize = (6,2))
     ax = PyPlot.axes()
 
-    prune_at = maximum_of_non_outliers(data[!,:fs],q_thresh)
+    # used to prune at maximum_of_non_outliers(data[!,:fs],q_thresh)
+    # now no pruning
+    prune_at = maximum(data[!,:fs])
     prune_inds = data[!,:fs] .<= prune_at
     
     # replacing select all ! with prune_inds
     stripplot( y = [length(ix) for ix in data[prune_inds,:UMI]],
-        x = data[prune_inds,:fs],
+        x = (x->log2(x)).(data[prune_inds,:fs]),
         hue = data[prune_inds,:tags],
         hue_order = [
             "fs<$(fs_thresh)",
@@ -574,20 +576,20 @@ function family_size_stripplot(data;
         
     ccs = data[ (data[!,:tags].=="likely_real") .|| (data[!,:tags].=="maybe-artefact"), :fs]
     
-    af_cutoff=artefact_cutoff(ccs, af_thresh, q_thresh)
+    af_cutoff=max(1,artefact_cutoff(ccs, af_thresh, q_thresh))
     
-    axvline([af_cutoff-0.5],c="red",label="artefact threshold")
+    axvline([log2(af_cutoff)],c="red",label="artefact threshold")
     
     for afths in 0.05:0.1:0.85
         afc=artefact_cutoff(ccs, afths, q_thresh)
-        axvline([afc-0.5],alpha=1.0)
+        axvline([log2(afc)],alpha=1.0)
     end
     
     afths=0.95
     afc=artefact_cutoff(ccs, afths, q_thresh)
-    axvline([afc-0.5],alpha=1.0,label="5% 15% ... 95%")
+    axvline([log2(afc)],alpha=1.0,label="5% 15% ... 95%")
     
-    axvline([af_cutoff-0.5],c="red")
+    axvline([log2(af_cutoff)],c="red")
     
     
     aftp=af_thresh*100

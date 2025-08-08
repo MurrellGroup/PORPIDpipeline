@@ -33,17 +33,17 @@ def bottle2_input(wildcards):
 # PORPIDpipeline parameters
 # demux
 chunk_size = 100000      # default 100000
-error_rate = 0.01        # default 0.01
+error_rate = 0.05        # default 0.01
 min_length = 2100        # default 2100
 max_length = 4300        # default 4300
-primer_tol = 1           # default 1 (allow 1 error when locating primers)
-primer_window = 100      # default 100 (search for primers in first 100 nucs)
+primer_tol = 2           # default 1 (allow 1 error when locating primers)
+primer_window = 200      # default 100 (search for primers in first 100 nucs)
 primer_chop = 0          # default 0 (reduce primers by 0 nucs)
 max_reads = 100000       # default 100000 reads per sample,
                          # use something large for no downsampling
 verbose = "true"         # default "false", use "true" to debug demux
 #porpid
-fs_thresh = 1            # default 1 (or 5 if af_thresh is 0)
+fs_thresh = 5            # default 1 (or 5 if af_thresh is 0)
 lda_thresh = 0.995       # default 0.995
 #consensus
 #contam
@@ -52,8 +52,8 @@ proportion_thresh = 0.2  # default 0.2
 dist_thresh = 0.015      # default 0.015
 contam_toggle = "on"     # default "on", use "off" to disable
 #postproc
-agreement_thresh = 0.7   # default 0.7
-af_thresh = 0.25         # default 0.25 (drops smallest 25% of CCS reads)
+agreement_thresh = 0.6   # default 0.7
+af_thresh = 0.0         # default 0.25 (drops smallest 25% of CCS reads)
 q_thresh = 0.99          # quantile threshold to eliminate large outliers
                          # from artifact filter computation
                          # (0.99 sets max_fs at the 1% mark)
