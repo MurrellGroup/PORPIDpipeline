@@ -4,7 +4,8 @@ Pkg.instantiate()
 Pkg.precompile()
 
 ENV["MPLBACKEND"] = "Agg"
-using PORPIDpipeline, CSV, BioSequences, DataFrames, DataFramesMeta
+using PORPIDpipeline, CSV, BioSequences
+using DataFrames, DataFramesMeta, StatsBase
 import MolecularEvolution
 
 fasta_collection = snakemake.input[1]*"/"*snakemake.wildcards["sample"]*".fasta"
@@ -60,6 +61,7 @@ println("$(sample): labelling $(minag_count) families as minag-reject")
 # now rename possible artefacts
 ccs=tag_df[tag_df[!,:tags].=="likely_real",:fs]
 af_cutoff=artefact_cutoff(ccs,af_thresh,q_thresh)
+q_cutoff=Int(ceil(quantile(ccs,q_thresh))) # maximum_of_non_outliers(ccs,q_thresh)
 art_count=0
 for row in eachrow(tag_df)
    if row[:tags] == "likely_real" && row[:fs]<af_cutoff
@@ -76,7 +78,8 @@ ali_seqs,seqnames,af_cutoff = H704_init_template_proc(fasta_collection, panel_fi
 sp_selected = @linq tag_df |> where(:Sample .== sample)
 sp_selected = @linq sp_selected |> where(:tags .!= "BPB-rejects")
 fig = family_size_umi_len_stripplot(sp_selected,fs_thresh=fs_thresh,
-        af_thresh=af_thresh,q_thresh=q_thresh,af_cutoff=af_cutoff)
+        af_thresh=af_thresh, q_thresh=q_thresh,
+        af_cutoff=af_cutoff, q_cutoff=q_cutoff)
 fig.savefig(snakemake.output[5];
     transparent = true,
     dpi = 200,
@@ -89,7 +92,8 @@ sp_fs_rejects = @linq sp_selected |> where(:tags .== "fs<$(fs_thresh)")
 sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
 sp_selected = vcat(sp_artefacts, sp_reals, sp_minag_rejects, sp_fs_rejects)
 fig = family_size_stripplot(sp_selected,fs_thresh=fs_thresh,
-        af_thresh=af_thresh,q_thresh=q_thresh,af_cutoff=af_cutoff)
+        af_thresh=af_thresh, q_thresh=q_thresh,
+        af_cutoff=af_cutoff, q_cutoff=q_cutoff)
 fig.savefig(snakemake.output[6];
     transparent = true,
     dpi = 200,

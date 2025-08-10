@@ -456,32 +456,12 @@ function fasttree_AA(seqs,seqnames; quiet = false)
 end
 
 """
-    maximum_of_non_outliers(vec)
-    computes maximumof the vec but discarding large outliers.
-"""
-function maximum_of_non_outliers(vec,q_thresh)
-    # sv=sort(vec,rev=true)
-    # ind=1
-    # while ind<length(sv) && log10(sv[ind])-log10(sv[ind+1]) > 1.5
-    #     ind=ind+1
-    # end
-    # return sv[ind]
-    return quantile(vec,q_thresh)
-end
-
-"""
     artefact_cutoff(ccs_counts,af_thresh,q_thresh)
-    Compute ccs cutoff from vector of ccs_counts
-    and an threshold between 0 and 1
+        Compute ccs cutoff from vector of ccs_counts
+        and and thresholds between 0 and 1
 """
 function artefact_cutoff(ccs_counts,af_thresh,q_thresh)
-    # ccs=sort(ccs_counts)
-    # tot=sum(ccs)
-    # cum_ccs=cumsum(ccs)
-    # cut=tot*af_thresh
-    # cut_ind=findfirst(x->x>cut,cum_ccs)
-    # af_cutoff=ccs[cut_ind]
-    af_cutoff = Int(ceil(maximum_of_non_outliers(ccs_counts,q_thresh)*af_thresh))
+    af_cutoff = Int(ceil(quantile(ccs_counts,q_thresh)*af_thresh))
     return(af_cutoff)
 end
 
@@ -491,12 +471,11 @@ Draws a stripplot of family sizes vs. UMI length from an input
 DataFrame. Returns the figure object.
 """
 function family_size_umi_len_stripplot(data;
-                    fs_thresh=5, af_thresh=0.25, q_thresh=0.99, af_cutoff=1)
+                    fs_thresh=5, af_thresh=0.25, q_thresh=0.99,
+                    af_cutoff=1, q_cutoff=1.0)
     tight_layout()
     fig = figure(figsize = (6,2))
     ax = PyPlot.axes()
-    
-    
 
     stripplot(y = [length(ix) for ix in data[!,:UMI]],
         x = (x->log2(x)).(data[!,:fs]),
@@ -511,8 +490,10 @@ function family_size_umi_len_stripplot(data;
             "heteroduplex"
         ],
         alpha = 0.6, dodge = true, jitter = 0.3, orient = "h", ax=ax)
-        
-            
+    
+    axvline([log2(max(1,q_cutoff))],c="orange",label="quantile threshold")
+    axvline([log2(max(1,af_cutoff))],c="red",label="artefact threshold")
+    
     yticklabels = ax.get_yticklabels()
     new_ytick_labels=(x->x[:get_text]()).(yticklabels)
     allowed=["7","8","9"]
@@ -520,14 +501,8 @@ function family_size_umi_len_stripplot(data;
     
     ax.set_yticks(ax.get_yticks())
     ax.set_yticklabels(new_ytick_labels)
-
     
-    # af_cutoff=artefact_cutoff(data[!,:fs], af_thresh)
-    axvline([log2(af_cutoff)],c="red",label="artefact threshold") # use -0.5 when no log2
-    
-    aftp=af_thresh*100
     labels = xlabel("log2 UMI family size"), ylabel("UMI length")
-    #  with $(aftp)% artefact threshold (fs=$(af_cutoff))
     
     # Shrink current axis by 20%
     box = ax.get_position()
@@ -538,7 +513,6 @@ function family_size_umi_len_stripplot(data;
     # Summary for plot title
     t = @transform(data, :is_likely_real = :tags .== "likely_real")
     g = DataFramesMeta.groupby(t,:is_likely_real)
-    # cts = @based_on(g, CCS = sum(:fs))
     cts = @combine(g, :CCS = sum(:fs))
     cts = sort!(cts, [:is_likely_real], rev = true)
     title("likely_real: $(cts[1, :CCS]) CCS, rejected: $(cts[2, :CCS]) CCS")
@@ -548,23 +522,22 @@ end
 
 """
     family_size_stripplot
-Draws a stripplot of family sizes with large jitter for maybe-artefact
-and likely_real from an input DataFrame. Returns the figure object.
+        Draws a stripplot of family sizes with large jitter for
+        maybe-artefact and likely_real from an input DataFrame.
 """
 function family_size_stripplot(data;
-                    fs_thresh=5, af_thresh=0.15, q_thresh=0.99, af_cutoff=1)
+                    fs_thresh=5, af_thresh=0.15, q_thresh=0.99,
+                    af_cutoff=1, q_cutoff=1.0)
     tight_layout()
     fig = figure(figsize = (6,2))
     ax = PyPlot.axes()
 
-    # used to prune at maximum_of_non_outliers(data[!,:fs],q_thresh)
-    # now no pruning
-    prune_at = maximum(data[!,:fs])
-    prune_inds = data[!,:fs] .<= prune_at
+    # prune data at q_thresh
+    prune_inds = data[!,:fs] .<= q_cutoff
     
     # replacing select all ! with prune_inds
     stripplot( y = [length(ix) for ix in data[prune_inds,:UMI]],
-        x = (x->log2(x)).(data[prune_inds,:fs]),
+        x = (x->(x)).(data[prune_inds,:fs]),
         hue = data[prune_inds,:tags],
         hue_order = [
             "fs<$(fs_thresh)",
@@ -574,25 +547,20 @@ function family_size_stripplot(data;
         ],
         alpha = 0.6, dodge = false, jitter = 0.4, orient = "h")
         
-    ccs = data[ (data[!,:tags].=="likely_real") .|| (data[!,:tags].=="maybe-artefact"), :fs]
+    axvline([q_cutoff],c="orange",label="quantile threshold",alpha=1.0)
     
-    af_cutoff=max(1,artefact_cutoff(ccs, af_thresh, q_thresh))
-    
-    axvline([log2(af_cutoff)],c="red",label="artefact threshold")
+    axvline([(af_cutoff)],c="red",label="artefact threshold",alpha=1.0)
     
     for afths in 0.05:0.1:0.85
-        afc=artefact_cutoff(ccs, afths, q_thresh)
-        axvline([log2(afc)],alpha=1.0)
+        # afc=artefact_cutoff(ccs, afths, q_thresh)
+        afc=(q_cutoff*afths)
+        axvline([(afc)],alpha=1.0)
     end
     
-    afths=0.95
-    afc=artefact_cutoff(ccs, afths, q_thresh)
-    axvline([log2(afc)],alpha=1.0,label="5% 15% ... 95%")
+    axvline([q_cutoff*0.95],alpha=1.0,label="5% 15% ... 95%")
     
-    axvline([log2(af_cutoff)],c="red")
-    
-    
-    aftp=af_thresh*100
+    axvline([af_cutoff],c="red",alpha=1.0)
+    axvline([q_cutoff],c="orange",alpha=1.0)
     
     # Shrink current axis by 20%
     box = ax.get_position()
@@ -600,18 +568,11 @@ function family_size_stripplot(data;
     # Put a legend to the right of the current axis
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
-    # Summary for plot title
-    # t = @transform(data, :is_likely_real = :tags .== "likely_real")
-    # g = DataFramesMeta.groupby(t,:is_likely_real)
-    # cts = @based_on(g, CCS = sum(:fs))
-    # cts = @combine(g, :CCS = sum(:fs))
-    # cts = sort!(cts, [:is_likely_real], rev = true)
-    # pc_artefact = round(100 * cts[2, :CCS] / (cts[1, :CCS] + cts[2, :CCS]),digits=1)
     nlr=sum(data[!,:tags].=="likely_real")
     naf=sum(data[!,:tags].=="maybe-artefact")
     pc_artefact = round(100 * naf / (nlr + naf),digits=1)
     
-    labels = xlabel("$(aftp)% af-thresh (fs=$(af_cutoff)) = $(pc_artefact)% artefacts"),
+    labels = xlabel("$(af_thresh) af-thresh ($(af_cutoff)) at quantile $(q_thresh) ($(q_cutoff)) -> $(pc_artefact)% artefacts"),
             ylabel("jitter plot")
 
     return fig
