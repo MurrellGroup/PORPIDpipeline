@@ -1,4 +1,6 @@
-# poretrim.jl
+# utilities
+
+### poretrim.jl
 
 Julia version 1.10.5
 
@@ -30,5 +32,14 @@ displaying various sequence counts such as the one below.
 When you first run the tool, julia will use the `Manifest` and `Project` files in this `utilities` 
 directory to install the required libraries locally. Thereafter run times should improve.
 
-This is still a work in progress
+### umi_analysis.jl
+
+This tool generates scatter plots that show family sizes for each UMI that 
+survives filtering.
+
+### MergeTreeplot.jl
+
+This tool merges two fasta files from the same sample but different datasets
+and then generates a tree plot that shows how UMI family sizes are distributed
+over UMIs
 

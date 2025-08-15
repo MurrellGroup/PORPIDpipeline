@@ -2,7 +2,7 @@
 
 julia_version = "1.10.5"
 manifest_format = "2.0"
-project_hash = "beacd16e51885fac5c0a6cd08491bf5d95dc7213"
+project_hash = "c4067846589a9181b5f809af522d7cad065ed446"
 
 [[deps.AliasTables]]
 deps = ["PtrArrays", "Random"]
@@ -227,6 +227,12 @@ deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers",
 git-tree-sha1 = "466d45dc38e15794ec7d5d63ec03d776a9aff36e"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
 version = "4.4.4+1"
+
+[[deps.FastTree_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "LLVMOpenMP_jll", "Libdl", "Pkg"]
+git-tree-sha1 = "ae6a5acb7f2ab9173f57dc55a44eee9a630f2f13"
+uuid = "046fc0e8-debb-562a-987b-147c85b24435"
+version = "2.1.11+1"
 
 [[deps.FilePathsBase]]
 deps = ["Compat", "Dates"]
@@ -522,6 +528,12 @@ deps = ["Dates", "Logging"]
 git-tree-sha1 = "f02b56007b064fbfddb4c9cd60161b6dd0f40df3"
 uuid = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 version = "1.1.0"
+
+[[deps.MAFFT_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "3ca25c5565abf66aec7396e338f36c1c3383c453"
+uuid = "72a4bdf2-be5e-5c84-b157-f1dc2927f791"
+version = "7.525.0+0"
 
 [[deps.MacroTools]]
 git-tree-sha1 = "1e0228a030642014fe5cfe68c2c0a818f9e3f522"

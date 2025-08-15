@@ -74,6 +74,7 @@ function chunked_filter_apply(in_path, out_path, func::Function; chunk_size=1000
             read_counts += func(chunk, chunk_size, seqs, phreds, names,
                 reject_qual_writer, reject_primer_writer, reject_idtrim_writer;
                 f_kwargs...)
+            @show read_counts
             seqs, phreds, names = [], Vector{Phred}[], []
             i = 0
         end
@@ -85,6 +86,7 @@ function chunked_filter_apply(in_path, out_path, func::Function; chunk_size=1000
         read_counts += func(chunk, chunk_size, seqs, phreds, names,
             reject_qual_writer, reject_primer_writer, reject_idtrim_writer;
             f_kwargs...)
+        @show read_counts
     end
     close(reader)
     close(reject_qual_writer)
