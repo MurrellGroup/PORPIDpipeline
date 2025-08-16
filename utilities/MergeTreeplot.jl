@@ -14,7 +14,7 @@ function consensus(seqs)
     return(cons)
 end
 
-function mergeInput(in_file_1,in_file_2,out_file)
+function mergeInput(in_file_1,in_file_2,out_file,mismatch_file)
     d1, d2 = Dict(), Dict()
     stream = open(in_file_1)
     records = collect(FASTX.FASTA.Reader(stream))
@@ -45,6 +45,7 @@ function mergeInput(in_file_1,in_file_2,out_file)
     only_2=setdiff(keys(seq_map_2),keys(seq_map_1))
     @show length(only_2)
     stream = open(FASTA.Writer, out_file, append=false)
+    mismatch_stream = open(FASTA.Writer, mismatch_file, append=false)
     count=0
     for k in both
         count+=1
@@ -55,6 +56,9 @@ function mergeInput(in_file_1,in_file_2,out_file)
             count+=1
             nam="seq$(count)_$(k)_$(seq_map_1[k])_$(seq_map_2[k])"
             write(stream, FASTA.Record(nam, d2[k]))
+            nam_1="seq$(count-1)_$(k)_$(seq_map_1[k])_$(seq_map_2[k])"
+            write(mismatch_stream, FASTA.Record(nam_1, d1[k]))
+            write(mismatch_stream, FASTA.Record(nam, d2[k]))
         end
     end
     for k in only_1
@@ -68,6 +72,7 @@ function mergeInput(in_file_1,in_file_2,out_file)
         write(stream, FASTA.Record(nam, d2[k]))
     end
     close(stream)
+    close(mismatch_stream)
     return
 end
 
@@ -216,6 +221,7 @@ end
     
     size_x=80*14
     size_y=(length(tip_numbers))*10
+    length(tip_numbers) < 50 ? size_y=(length(tip_numbers))*20 : nothing
     @show maximum(values(d))
     scale_x=size_x / (maximum(values(d)))
     @show size_x, size_y, scale_x
@@ -320,7 +326,7 @@ end
     xlims --> (ex[1] - 5*14 , ex[2] + 25*14)
         
     ey = extrema(filter(isfinite, dend.y))
-    ylims --> (ey[1] - 2.0, ey[2] + 4.0)
+    ylims --> (ey[1] - 2.0, ey[2] + 2.0)
     
    
 
@@ -380,16 +386,19 @@ end
 in_file_1=ARGS[1]
 in_file_2=ARGS[2]
 
+in_dirs = union( (x->String(split(x,"/")[1]) ).([in_file_1,in_file_2]) )
+
 work_dir = "working/"
 mkpath(work_dir)
 merged_file = work_dir*"merged.fasta"
+mismatch_file = work_dir*"mismatches.fasta"
 merged_aligned_file = work_dir*"merged_aligned.fasta"
 tree_file = work_dir*"tree.tre"
 rerooted_tree_file = work_dir*"rerooted_tree.tre"
 ladder_tree_file = work_dir*"ladder_tree.tre"
-plot_file = work_dir*"fs_tree_plot_$(basename(in_file_1)[1:end-6])_$(basename(in_file_2)[1:end-6]).pdf"
+plot_file = work_dir*"$(in_dirs[1])_tree_plot_$(basename(in_file_1)[1:end-6])_$(basename(in_file_2)[1:end-6]).pdf"
 
-mergeInput(in_file_1,in_file_2,merged_file)
+mergeInput(in_file_1,in_file_2,merged_file,mismatch_file)
 my_mafft(merged_file, merged_aligned_file)
 newickTree(merged_aligned_file, tree_file; nu=false)
 
@@ -399,7 +408,7 @@ ladderize!(tree,getroot(tree))
 
 writeTopology(tree, ladder_tree_file)
 
-title="\n Merged UMIs \n $(basename(in_file_1)[1:end-6]) \n $(basename(in_file_2)[1:end-6])"
+title="Merged UMIs from $(in_dirs), $(basename(in_file_1)[1:end-6]), $(basename(in_file_2)[1:end-6])"
 
 stream = open(merged_aligned_file)
 records = collect(FASTX.FASTA.Reader(stream))
