@@ -26,8 +26,13 @@ end
 if "af_override" in keys(config)
     af_thresh = config["af_override"]
 end
+
 if "q_override" in keys(config)
     q_thresh = config["q_override"]
+end
+
+if "ma_override" in keys(config)
+    agreement_thresh = config["ma_override"]
 end
 
 # check for fasta collection
@@ -120,3 +125,7 @@ fig.savefig(snakemake.output[10];
   transparent = true,
   dpi = 200,
   bbox_inches = "tight")
+  
+sample_dir = snakemake.input[4]
+fig = minag_position_plot(sample_dir,ma_thresh=agreement_thresh)
+fig.savefig(snakemake.output[12]; transparent = true, dpi = 200, bbox_inches = "tight")

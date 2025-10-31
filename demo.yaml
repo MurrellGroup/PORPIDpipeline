@@ -7,7 +7,9 @@ demo:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAcactcaNNNNNNNNGTCATTGGTCTTAAAGGTACCTG
     sec_str_primer: TAGGCATCTCCT
     panel: "panels/HIV1_COM_2017_5970-8994_DNA_stripped.fasta"
+    fs_override: 1
     af_override: 0.4
+    q_override: 0.98
   donor_3_REN:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAggtagcNNNNNNNNGTCATTGGTCTTAAAGGTACCTG
     sec_str_primer: TAGGCATCTCCT
@@ -16,14 +18,12 @@ demo:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAacagtgNNNNNNNNGTATGTCATTGACAGTCCAGC
     sec_str_primer: TTGACTAGCGGAGGCTAGAAGGAGA
     panel: "panels/HIV1_COM_2017_787-3300_DNA_stripped.fasta"
-    af_override: 0.3
   donor_2_GP:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAcactcaNNNNNNNNGTATGTCATTGACAGTCCAGC
     sec_str_primer: TTGACTAGCGGAGGCTAGAAGGAGA
     panel: "panels/HIV1_COM_2017_787-3300_DNA_stripped.fasta"
-    af_override: 0.0
-    fs_override: 14
   donor_3_GP:
     cDNA_primer: CCGCTCCGTCCGACGACTCACTATAggtagcNNNNNNNNGTATGTCATTGACAGTCCAGC
     sec_str_primer: TTGACTAGCGGAGGCTAGAAGGAGA
     panel: "panels/HIV1_COM_2017_787-3300_DNA_stripped.fasta"
+    ma_override: 0.6

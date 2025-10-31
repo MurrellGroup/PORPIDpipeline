@@ -5,6 +5,7 @@ export # apobec_model
 export # functions
     mafft,
     mafft_align,
+    minag_position_plot,
     family_size_umi_len_stripplot,
     family_size_stripplot,
     variant_collapse,

@@ -36,14 +36,14 @@ chunk_size = 100000      # default 100000
 error_rate = 0.02        # default 0.01
 min_length = 2100        # default 2100
 max_length = 4300        # default 4300
-primer_tol = 2           # default 1 (allow 1 error when locating primers)
+primer_tol = 1           # default 1 (allow 1 error when locating primers)
 primer_window = 200      # default 100 (search for primers in first 100 nucs)
 primer_chop = 0          # default 0 (reduce primers by 0 nucs)
 max_reads = 100000       # default 100000 reads per sample,
                          # use something large for no downsampling
 verbose = "true"         # default "false", use "true" to debug demux
 #porpid
-fs_thresh = 3            # default 1 (or 5 if af_thresh is 0)
+fs_thresh = 5            # default 1 (or 5 if af_thresh is 0)
 lda_thresh = 0.995       # default 0.995
 #consensus
 #contam
@@ -52,9 +52,9 @@ proportion_thresh = 0.2  # default 0.2
 dist_thresh = 0.015      # default 0.015
 contam_toggle = "on"     # default "on", use "off" to disable
 #postproc
-agreement_thresh = 0.6   # default 0.7
+agreement_thresh = 0.7   # default 0.7
 af_thresh = 0.00         # default 0.25 (drops smallest 25% of non-outlier reads)
-q_thresh = 1.0          # quantile threshold to eliminate large outliers
+q_thresh = 1.0           # quantile threshold to eliminate large outliers
                          # from artifact filter computation
                          # (0.99 sets max_fs at the 1% mark)
 panel_thresh = 40        # default 50
@@ -121,7 +121,8 @@ rule consensus:
         "porpid/{dataset}/bottle1_report.csv"
     output:
         "porpid/{dataset}/consensus/{sample}.fasta",
-        "porpid/{dataset}/tags_minags/{sample}.csv"
+        "porpid/{dataset}/tags_minags/{sample}.csv",
+        directory("porpid/{dataset}/agreement/{sample}")
     params:
         config = lambda wc: config[wc.dataset][wc.sample]
     script:
@@ -148,7 +149,8 @@ rule postproc:
     input:
         "porpid/{dataset}/contam_passed",
         "porpid/{dataset}/tags_minags/{sample}.csv",
-        "porpid/{dataset}/porpid/{sample}.fastq.gz"
+        "porpid/{dataset}/porpid/{sample}.fastq.gz",
+        "porpid/{dataset}/agreement/{sample}/"
     output:
         report("postproc/{dataset}/{sample}/{sample}.fasta.mds.png", category = "postproc", caption = "report-rst/mds.rst"),
         "postproc/{dataset}/{sample}/{sample}.fasta.apobec.csv",
@@ -160,7 +162,8 @@ rule postproc:
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.fasta",
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.csv",
         report("postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png", category = "postproc", caption = "report-rst/di_nuc_freq.rst"),
-        "postproc/{dataset}/{sample}/{sample}_tags_filtered.csv"
+        "postproc/{dataset}/{sample}/{sample}_tags_filtered.csv",
+        report("postproc/{dataset}/{sample}/{sample}_minags.png", category = "postproc", caption = "report-rst/minags.rst")
     params:
         config = lambda wc: config[wc.dataset][wc.sample],
         panel = lambda wc: config[wc.dataset][wc.sample]["panel"],
@@ -191,6 +194,7 @@ rule report:
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.fasta",
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.csv",
         "postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png",
+        "postproc/{dataset}/{sample}/{sample}_minags.png",
         "postproc/{dataset}/bottle2_report.csv"
     params:
         VERSION = VERSION,

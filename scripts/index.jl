@@ -42,23 +42,33 @@ cfg = snakemake.params["config"]
 fs_thresh = snakemake.params["fs_thresh"]
 af_thresh = snakemake.params["af_thresh"]
 q_thresh = snakemake.params["q_thresh"]
-seq_counts_df = DataFrame(Sample = [], fs_used = [], af_used = [], Porpid_Seqs = [],
-            Rej_Artefact = [], Rej_Min_Ag = [], Rej_Panel = [], Rej_Seqs = [], Final_Seqs = [])
+ma_thresh = snakemake.params["agreement_thresh"]
+seq_counts_df = DataFrame(Sample = [], fs_used = [], af_used = [], q_used = [], ma_used = [], Porpid_Seqs = [],
+            Rej_Artefact = [], Rej_Contam = [], Rej_Min_Ag = [], Rej_Panel = [], Rej_Seqs = [], Final_Seqs = [])
 for sample in sort(snakemake.params["SAMPLES"])
     "fs_override" in keys(cfg[sample]) ? fs_used = cfg[sample]["fs_override"] : fs_used = fs_thresh
     "af_override" in keys(cfg[sample]) ? af_used = cfg[sample]["af_override"] : af_used = af_thresh
+    "q_override" in keys(cfg[sample]) ? q_used = cfg[sample]["q_override"] : q_used = q_thresh
+    "ma_override" in keys(cfg[sample]) ? ma_used = cfg[sample]["ma_override"] : ma_used = ma_thresh
     p_seqs, p_seq_names = read_fasta("porpid/$(dataset)/consensus/$(sample).fasta")    #porpid sequences
+    c_contam_seq_number = 0
+    contam_file = "porpid/$(dataset)/contam_failed/$(sample).fasta"
+    if isfile(contam_file)
+        c_seqs, c_seq_names = read_fasta(contam_file) #contam rejections
+        c_contam_seq_number = length(c_seqs)
+    end
     r_seqs, r_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.fasta") #rejected sequences
     f_seqs, f_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta") #final sequences
     sample_reject_df = CSV.read("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.csv", DataFrame) #reject split
     r_ma_seq_number = sample_reject_df[1,"count"]
     r_art_seq_number = sample_reject_df[2,"count"]
     r_pan_seq_number = sample_reject_df[3,"count"]
+    
     p_seq_number = length(p_seqs)
-    r_seq_number = length(r_seqs)
+    r_seq_number = length(r_seqs) + c_contam_seq_number
     f_seq_number = length(f_seqs)
     
-    push!(seq_counts_df, [sample, fs_used, af_used, p_seq_number, r_art_seq_number, r_ma_seq_number, r_pan_seq_number, r_seq_number, f_seq_number])
+    push!(seq_counts_df, [sample, fs_used, af_used, q_used, ma_used, p_seq_number, r_art_seq_number, c_contam_seq_number, r_ma_seq_number, r_pan_seq_number, r_seq_number, f_seq_number])
 end
 seq_counts_df[!, :Porpid_Seqs] = convert.(Int, seq_counts_df[:, :Porpid_Seqs])
 seq_counts_df[!, :Rej_Min_Ag] = convert.(Int, seq_counts_df[:, :Rej_Min_Ag])
@@ -70,8 +80,8 @@ seq_counts_df[!, :Final_Seqs] = convert.(Int, seq_counts_df[:, :Final_Seqs])
 #create final table with sequence number and reads per template for porpid seqs
 joined_df = innerjoin(seq_counts_df, demux_df, on = :Sample)
 joined_df = rename!(joined_df,:Count => :Read_Count) #change Counts column name to Read_Count
-joined_df[!, :Reads_per_Porpid_Seq] = joined_df[!, :Read_Count] ./ joined_df[!, :Porpid_Seqs]
-joined_df = select(joined_df, [:Sample, :fs_used, :af_used, :Reads_per_Porpid_Seq], :Porpid_Seqs, :Rej_Min_Ag, :Rej_Artefact, :Rej_Panel, :Rej_Seqs, :Final_Seqs)
+joined_df[!, :Reads_per_Seq] = joined_df[!, :Read_Count] ./ joined_df[!, :Porpid_Seqs]
+joined_df = select(joined_df, [:Sample, :fs_used, :af_used, :q_used, :ma_used, :Reads_per_Seq], :Porpid_Seqs, :Rej_Min_Ag, :Rej_Artefact, :Rej_Contam, :Rej_Panel, :Rej_Seqs, :Final_Seqs)
 joined_df_tbl = format_tbl(joined_df)
 CSV.write(snakemake.output[2], joined_df)
 
@@ -223,7 +233,7 @@ end
 
 html_str = html_str * """
     </table></div>
-    <h4>parameters:</h4>
+    <h4>default parameters:</h4>
     <ul>
       <li> fs_thresh = $(snakemake.params["fs_thresh"]) </li>
       <li> af_thresh = $(snakemake.params["af_thresh"]) </li>
@@ -235,7 +245,7 @@ html_str = html_str * """
     <h3>sequence counts:</h3>
     $(joined_df_tbl)
     Summary of sequence output from porpid, those that were rejected and the
-    final sequence count after filtering. Reads per porpid sequence
+    final sequence count after filtering. Reads per sequence
     can be used to compare average depth across different samples. 
 """;
 

@@ -33,6 +33,7 @@ mds_fig = get_image_str(snakemake.input[4]);
 phylo_fig = get_image_str(snakemake.input[5]);
 pr_tbl = format_tbl(CSV.read(snakemake.input[8], DataFrame));
 di_nuc_fig = get_image_str(snakemake.input[9]);
+minags_fig = get_image_str(snakemake.input[10]);
 
 html_str_hdr = """
 <html>
@@ -122,6 +123,9 @@ html_str = html_str_hdr * """
             "alt="" width=100% style="max-width: 700px;">
             </p>
             <img src="data:image/png;base64,$(af_fig)
+            "alt="" width=100% style="max-width: 700px;">
+            </p>
+            <img src="data:image/png;base64,$(minags_fig)
             "alt="" width=100% style="max-width: 700px;">
             <h4>UMI family and CCS totals for each type of PORPID result</h4>
             <p>

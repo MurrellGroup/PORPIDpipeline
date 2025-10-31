@@ -209,9 +209,9 @@ function chunked_quality_demux(chunk, chunk_size, seqs, phreds, names,
             @show sampleIDs, IDind2name, fwd_primers, fwd_primer
         end
         
-        # fwd_queries=[ApproximateSearchQuery(LongDNA{4}(fwd)) for fwd in fwd_ends]
-        fwd_query=ApproximateSearchQuery(LongDNA{4}(fwd_primer[chop+1:end]))
-        rev_query=ApproximateSearchQuery(LongDNA{4}(rev_adapter[chop+1:end]))
+        # fwd_queries=[ApproximateSearchQuery(LongDNA{4}(fwd),iscompatible) for fwd in fwd_ends]
+        fwd_query=ApproximateSearchQuery(LongDNA{4}(fwd_primer[chop+1:end]),iscompatible)
+        rev_query=ApproximateSearchQuery(LongDNA{4}(rev_adapter[chop+1:end]),iscompatible)
             
         keeps=[]
         for i in 1:length(seqs)
@@ -258,7 +258,7 @@ function chunked_quality_demux(chunk, chunk_size, seqs, phreds, names,
         for i in 1:length(sampleIDs)
             template = template_names[i]
             stream = FASTQ.Writer(GzipCompressorStream(open(demux_dir*"/"*template*".fastq.gz", append=true)))
-            id_query=ApproximateSearchQuery(LongDNA{4}(sampleIDs[i]))
+            id_query=ApproximateSearchQuery(LongDNA{4}(sampleIDs[i]),iscompatible)
             count=0
             for k in 1:length(seqs_keep)
                 id_hit=findfirst(id_query,0,seqs_keep[k][1:10])

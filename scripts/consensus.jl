@@ -4,9 +4,11 @@ Pkg.instantiate()
 Pkg.precompile()
 
 ENV["MPLBACKEND"] = "Agg"
-using PORPIDpipeline, CSV, DataFrames
+using PORPIDpipeline, CSV, DataFrames, StatsBase, BioSequences
 
 import RobustAmpliconDenoising
+
+ag_directory = snakemake.output[3]
 
 function generateConsensusFromDir(dir, template_name)
     files = [dir*"/"*f for f in readdir(dir) if f[end-5:end] == ".fastq"]
@@ -22,13 +24,39 @@ function generateConsensusFromDir(dir, template_name)
     return seq_collection, seqname_collection
 end
 
+function runLengths(vec)
+    (vals,lens)=rle(vec)
+    ret=vcat([ones(Int,lens[i])*lens[i] for i in 1:length(lens)]...)
+    return ret
+end
+
+function complement_char(s::String)
+    c='-'
+    length(s)>0 ? c=s[1] : nothing
+    return string( complement(DNA(c)) )
+end
+
 function ConsensusFromFastq(file)
+    ma_margin=1 # to ignore first and last nt in min_ag calculation.
     seqs,phreds,seq_names = PORPIDpipeline.read_fastq(file)
     draft = RobustAmpliconDenoising.consensus_seq(seqs)
     draft2 = RobustAmpliconDenoising.refine_ref(draft, seqs)
     final_cons = RobustAmpliconDenoising.refine_ref(draft2,seqs)
     alignments, maps, matches, matchContent = getReadMatches(final_cons, seqs, 0)
-    cons_name = split(basename(file),"_")[1]*" fs=$(length(seqs)) minag=$(round(minimum(matches); digits = 2))"
+    min_ag=round(minimum(matches[1+ma_margin:end-ma_margin]); digits = 2)
+    cons_name = split(basename(file),"_")[1]*" fs=$(length(seqs)) minag=$(min_ag)"
+    ag_list = [round(m; digits = 2) for m in matches] #make list of agreement scores
+    # min_ag = minimum(ag_list)
+    ag_nts = (complement_char).( (mode).(matchContent) )
+    ag_rls = runLengths(ag_nts)
+    ag_inds = (x->x<=min_ag).(ag_list)
+    ag_inds = ag_inds .& (x->x!="-").(ag_nts) # drop gap characters from min ag dataframe
+    ag_nt = ag_nts[ag_inds]
+    ag_rl = ag_rls[ag_inds]
+    ag_pos = (x->length(ag_list)-x+1).(collect(1:length(ag_list))[ag_inds])
+    ag_df = DataFrame(ag = ag_list[ag_inds], agp=ag_pos, agnt=ag_nt, agrl=ag_rl) #create dataframe from this data
+    mkpath(ag_directory) #couldn't figure out why snakemake wouldn't make the path, had to do it here
+    CSV.write(ag_directory*"/"*template_name*split(basename(file),"_")[1]*"_agreement.csv", ag_df);
     return final_cons, cons_name
 end
 
@@ -88,7 +116,8 @@ println("Processing $(template_name)")
 base_dir = snakemake.input[1]*"/"*template_name*"_keeping"
 seq_collection, seqname_collection = generateConsensusFromDir(base_dir, template_name)
 trimmed_collection = [RobustAmpliconDenoising.primer_trim(s,to_trim) for s in seq_collection];
-PORPIDpipeline.write_fasta(snakemake.output[1],reverse_complement.(trimmed_collection),names = seqname_collection)
+PORPIDpipeline.write_fasta(snakemake.output[1],PORPIDpipeline.reverse_complement.(trimmed_collection),
+        names = seqname_collection)
 
 # First update tag data with minimum_agreement scores
 tag_df = CSV.read(snakemake.input[2], DataFrame)

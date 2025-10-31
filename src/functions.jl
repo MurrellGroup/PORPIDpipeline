@@ -465,6 +465,44 @@ function artefact_cutoff(ccs_counts,af_thresh,q_thresh)
     return(af_cutoff)
 end
 
+function minag_position_plot(sample_dir; ma_thresh=0.7)
+    sample_files = readdir(sample_dir)
+    sample_files = sample_files[ (x->endswith(x,".csv")).(sample_files)]
+    df=DataFrame()
+    for file in sample_files
+        file_path=sample_dir*"/"*file
+        ndf = CSV.read(file_path,DataFrame,types=Dict(1=>Float64,2=>Int,3=>String,4=>Int))
+        df=vcat(df,ndf)
+    end
+    tight_layout()
+    fig = figure(figsize = (6,2))
+    ax = PyPlot.axes()
+    # prune data at q_thresh
+    prune_inds = df[!,:ag] .<= 0.9
+    legend=false
+    run_lengths=sort(union(df[prune_inds,:agrl]))
+    for run in run_lengths
+        prune = prune_inds .& (df[!,:agrl] .== run)
+        run == run_lengths[end] ? legend="auto" : nothing
+        stripplot( y = df[prune,:ag],
+            x = df[prune,:agp],
+            hue = df[prune,:agnt].*(string.(df[prune,:agrl])),
+            hue_order = ["C","G","T","A"].*string(run),
+            size=run,ax=ax,legend=legend,
+            alpha = 0.6, dodge = false, jitter = 0.0, orient = "h", native_scale=true )
+    end
+    axhline([ma_thresh],c="purple",label="minag threshold",alpha=1.0)
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    # Put a legend to the right of the current axis
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    
+    labels = xlabel("sequence position"),ylabel("minag")
+    return fig
+end
+    
+
 """
     family_size_umi_len_stripplot
 Draws a stripplot of family sizes vs. UMI length from an input
