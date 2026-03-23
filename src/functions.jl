@@ -465,14 +465,17 @@ function artefact_cutoff(ccs_counts,af_thresh,q_thresh)
     return(af_cutoff)
 end
 
-function minag_position_plot(sample_dir; ma_thresh=0.7)
+function minag_position_plot(sample_dir, tags_df; ma_thresh=0.7)
     sample_files = readdir(sample_dir)
     sample_files = sample_files[ (x->endswith(x,".csv")).(sample_files)]
     df=DataFrame()
     for file in sample_files
-        file_path=sample_dir*"/"*file
-        ndf = CSV.read(file_path,DataFrame,types=Dict(1=>Float64,2=>Int,3=>String,4=>Int))
-        df=vcat(df,ndf)
+        umi=split(file,"_")[end-1][end-7:end]
+        if umi in tags_df[!,:UMI]
+            file_path=sample_dir*"/"*file
+            ndf = CSV.read(file_path,DataFrame,types=Dict(1=>Float64,2=>Int,3=>String,4=>Int))
+            df=vcat(df,ndf)
+        end
     end
     tight_layout()
     fig = figure(figsize = (6,2))

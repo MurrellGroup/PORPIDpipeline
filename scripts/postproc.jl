@@ -127,5 +127,9 @@ fig.savefig(snakemake.output[10];
   bbox_inches = "tight")
   
 sample_dir = snakemake.input[4]
-fig = minag_position_plot(sample_dir,ma_thresh=agreement_thresh)
+sp_selected = @linq tag_df |> where(:Sample .== sample)
+sp_minag_rejects = @linq sp_selected |> where(:tags .== "minag-reject")
+sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
+sp_selected = vcat(sp_reals, sp_minag_rejects)
+fig = minag_position_plot(sample_dir,sp_selected,ma_thresh=agreement_thresh)
 fig.savefig(snakemake.output[12]; transparent = true, dpi = 200, bbox_inches = "tight")
