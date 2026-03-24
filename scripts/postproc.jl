@@ -52,18 +52,7 @@ panel_file = snakemake.params["panel"]
 # update tag data with minimum_agreement and artefact rejects
 tag_df = CSV.read(snakemake.input[2], DataFrame)
 
-# first do min agrement filter
-minag_count=0
-for row in eachrow(tag_df)
-    if row[:tags] == "likely_real" && row[:minag] < agreement_thresh
-        row[:tags]="minag-reject"
-        global minag_count+=1
-    end
-end
-println("$(sample): labelling $(minag_count) families as minag-reject")
-
-
-# now rename possible artefacts
+# first rename possible artefacts
 ccs=tag_df[tag_df[!,:tags].=="likely_real",:fs]
 af_cutoff=artefact_cutoff(ccs,af_thresh,q_thresh)
 q_cutoff=Int(ceil(quantile(ccs,q_thresh))) # maximum_of_non_outliers(ccs,q_thresh)
@@ -75,6 +64,19 @@ for row in eachrow(tag_df)
    end
 end
 println("$(sample): labelling $(art_count) families with fs under $(af_cutoff) as maybe-artefact")
+
+
+# now do min agrement filter
+minag_count=0
+for row in eachrow(tag_df)
+    if row[:tags] == "likely_real" && row[:minag] < agreement_thresh
+        row[:tags]="minag-reject"
+        global minag_count+=1
+    end
+end
+println("$(sample): labelling $(minag_count) families as minag-reject")
+
+
 
 CSV.write(snakemake.output[11], sort!(tag_df, [:Sample, :tags, :fs], rev = [false, false, true]));
 
@@ -128,8 +130,10 @@ fig.savefig(snakemake.output[10];
   
 sample_dir = snakemake.input[4]
 sp_selected = @linq tag_df |> where(:Sample .== sample)
-sp_minag_rejects = @linq sp_selected |> where(:tags .== "minag-reject")
 sp_reals = @linq sp_selected |> where(:tags .== "likely_real")
+sp_minag_rejects = @linq sp_selected |> where(:tags .== "minag-reject")
+# sp_artefacts = @linq sp_selected |> where(:tags .== "maybe-artefact")
+# sp_fs_rejects = @linq sp_selected |> where(:tags .== "fs<$(fs_thresh)")
 sp_selected = vcat(sp_reals, sp_minag_rejects)
 fig = minag_position_plot(sample_dir,sp_selected,ma_thresh=agreement_thresh)
 fig.savefig(snakemake.output[12]; transparent = true, dpi = 200, bbox_inches = "tight")

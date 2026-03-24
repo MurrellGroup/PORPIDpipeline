@@ -471,7 +471,7 @@ function minag_position_plot(sample_dir, tags_df; ma_thresh=0.7)
     df=DataFrame()
     for file in sample_files
         umi=split(file,"_")[end-1][end-7:end]
-        if umi in tags_df[!,:UMI]
+        if umi in tags_df[!,:UMI] 
             file_path=sample_dir*"/"*file
             ndf = CSV.read(file_path,DataFrame,types=Dict(1=>Float64,2=>Int,3=>String,4=>Int))
             df=vcat(df,ndf)

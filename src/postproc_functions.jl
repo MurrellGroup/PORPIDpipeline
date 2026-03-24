@@ -17,7 +17,20 @@ function H704_init_template_proc(fasta_collection, panel_file,
     reject_seqs=[]
     reject_names=[]
     
-    # filter reads that do not make minimum agreement
+    # calculate af_cutoff before discarding seq that dont meet minimum agreement
+    af_cutoff = artefact_cutoff(sizes,af_thresh,q_thresh)
+    
+    # filter artefacts
+    push!(reject_df,["ccs_count < artefact cutoff",af_cutoff,sum(sizes .< af_cutoff)])
+    reject_seqs=vcat(reject_seqs, seqs[sizes .< af_cutoff])
+    reject_names=vcat(reject_names, annot_names[sizes .< af_cutoff].*" possible_artefact_at_$(af_cutoff)_cutoff" )
+    
+    seqs = seqs[sizes .>= af_cutoff]
+    annot_names = annot_names[sizes .>= af_cutoff]
+    agreement_scores = agreement_scores[sizes .>= af_cutoff]
+    sizes = sizes[sizes .>= af_cutoff]
+    
+    # now filter reads that do not make minimum agreement
     push!(reject_df,["minimum_agreement < threshold",agreement_thresh,
         sum(agreement_scores .< agreement_thresh)])
     
@@ -30,18 +43,7 @@ function H704_init_template_proc(fasta_collection, panel_file,
     sizes = sizes[agreement_scores .>= agreement_thresh]
     agreement_scores = agreement_scores[agreement_scores .>= agreement_thresh]
     
-    # calculate af_cutoff after discarding seq that dont meet minimum agreement
-    af_cutoff = artefact_cutoff(sizes,af_thresh,q_thresh)
     
-    # filter artefacts
-    push!(reject_df,["ccs_count < artefact cutoff",af_cutoff,sum(sizes .< af_cutoff)])
-    reject_seqs=vcat(reject_seqs, seqs[sizes .< af_cutoff])
-    reject_names=vcat(reject_names, annot_names[sizes .< af_cutoff].*" possible_artefact_at_$(af_cutoff)_cutoff" )
-    
-    seqs = seqs[sizes .>= af_cutoff]
-    annot_names = annot_names[sizes .>= af_cutoff]
-    agreement_scores = agreement_scores[sizes .>= af_cutoff]
-    sizes = sizes[sizes .>= af_cutoff]
     
     ali_seqs = mafft_align(seqs);
     
