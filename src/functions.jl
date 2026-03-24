@@ -474,6 +474,8 @@ function minag_position_plot(sample_dir, tags_df; ma_thresh=0.7)
         if umi in tags_df[!,:UMI] 
             file_path=sample_dir*"/"*file
             ndf = CSV.read(file_path,DataFrame,types=Dict(1=>Float64,2=>Int,3=>String,4=>Int))
+            ndf = sort!(ndf, [:agrl], rev = true)
+            nrow(ndf) > 1 ? ndf = ndf[1:1,1:end] : nothing
             df=vcat(df,ndf)
         end
     end
