@@ -6,6 +6,7 @@ Pkg.precompile()
 ENV["MPLBACKEND"] = "Agg"
 using PORPIDpipeline, CSV, BioSequences
 using DataFrames, DataFramesMeta, StatsBase
+using SeededAlignment
 import MolecularEvolution
 
 fasta_collection = snakemake.input[1]*"/"*snakemake.wildcards["sample"]*".fasta"
@@ -17,6 +18,7 @@ af_thresh = snakemake.params["af_thresh"]
 q_thresh = snakemake.params["q_thresh"]
 agreement_thresh = snakemake.params["agreement_thresh"]
 panel_thresh = snakemake.params["panel_thresh"]
+ff_match = snakemake.params["ff_match"]
 
 config = snakemake.params["config"]
 if "fs_override" in keys(config)
@@ -33,6 +35,15 @@ end
 
 if "ma_override" in keys(config)
     agreement_thresh = config["ma_override"]
+end
+
+ff_ref = nothing
+if "ff_ref" in keys(config)
+    ff_ref = config["ff_ref"]
+end
+
+if "rr_match_override" in keys(config)
+    ff_match = config["ff_match"]
 end
 
 # check for fasta collection
@@ -76,11 +87,19 @@ for row in eachrow(tag_df)
 end
 println("$(sample): labelling $(minag_count) families as minag-reject")
 
-
-
 CSV.write(snakemake.output[11], sort!(tag_df, [:Sample, :tags, :fs], rev = [false, false, true]));
 
 ali_seqs,seqnames,af_cutoff = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh, af_thresh=af_thresh,q_thresh=q_thresh)
+
+seqs_file=snakemake.output[4]
+if ! isnothing(ff_ref)
+    hk = filter_and_align(ff_ref,seqs_file,seqs_file[1:end-6]*"_functionals.fasta",seqs_file[1:end-6]*"_nonfunctionals.fasta", match_thresh=ff_match)
+    CSV.write(snakemake.output[13], hk)
+else
+    hk = DataFrame(sample=String[], sequences=Int[])
+    push!(hk,[seqs_file,length(ali_seqs)])
+    CSV.write(snakemake.output[13], hk)
+end
 
 sp_selected = @linq tag_df |> where(:Sample .== sample)
 sp_selected = @linq sp_selected |> where(:tags .!= "BPB-rejects")

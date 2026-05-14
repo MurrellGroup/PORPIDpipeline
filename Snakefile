@@ -58,6 +58,7 @@ q_thresh = 0.999         # quantile threshold to eliminate large outliers
                          # from artifact filter computation
                          # (0.99 sets max_fs at the 1% mark)
 panel_thresh = 50        # default 50
+ff_match = 0.7           # adjust to suit ff reference
 #tar
 degap = "true"           # default "true", use "false" to disable
 collapse = "true"        # default "true", use "false" to disable
@@ -163,7 +164,8 @@ rule postproc:
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.csv",
         report("postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png", category = "postproc", caption = "report-rst/di_nuc_freq.rst"),
         "postproc/{dataset}/{sample}/{sample}_tags_filtered.csv",
-        report("postproc/{dataset}/{sample}/{sample}_minags.png", category = "postproc", caption = "report-rst/minags.rst")
+        report("postproc/{dataset}/{sample}/{sample}_minags.png", category = "postproc", caption = "report-rst/minags.rst"),
+        "postproc/{dataset}/{sample}/{sample}_ff_results.csv"
     params:
         config = lambda wc: config[wc.dataset][wc.sample],
         panel = lambda wc: config[wc.dataset][wc.sample]["panel"],
@@ -171,7 +173,8 @@ rule postproc:
         q_thresh = q_thresh,
         fs_thresh = fs_thresh,
         agreement_thresh = agreement_thresh,
-        panel_thresh = panel_thresh
+        panel_thresh = panel_thresh,
+        ff_match = ff_match
     script:
         "scripts/postproc.jl"
         

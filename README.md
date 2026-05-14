@@ -1,4 +1,5 @@
-# PORPIDpipeline
+# PORPIDpipeline  
+## (currently working on a functional filter for postproc script)
 
 by Alec Pankow and Ben Murrell, now maintained by Hugh Murrell
 
