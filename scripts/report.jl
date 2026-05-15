@@ -34,6 +34,14 @@ phylo_fig = get_image_str(snakemake.input[5]);
 pr_tbl = format_tbl(CSV.read(snakemake.input[8], DataFrame));
 di_nuc_fig = get_image_str(snakemake.input[9]);
 minags_fig = get_image_str(snakemake.input[10]);
+ff_table=CSV.read(snakemake.input[12], DataFrame)
+if size(ff_table)[2] > 5
+    ffc_tbl = format_tbl(ff_table[:,1:5])
+    ffr_tbl = format_tbl(ff_table[:,6:end])
+else
+    ffc_tbl = format_tbl(ff_table[:,1:2])
+    ffr_tbl = nothing
+end
 
 html_str_hdr = """
 <html>
@@ -185,6 +193,27 @@ html_str = html_str_hdr * """
             <img src="data:image/svg+xml;base64,$(phylo_fig)
             "alt="" width=100% style="max-width: 700px;">
             <p>
+            <h3>Functional Filtering</h3>
+            An attempt has been made to include a functional filter into the postproc script.
+            If the user supplies a reference sequence for this sample in the config file by
+            including a path to a fasta file then the first sequence in this file will be
+            used as a template to extract matching function sequences from the sample.
+            This reference should consist of one open reading frame and sample sequences will
+            have their longest open reading frame codon aligned and trimmed to the reference.
+            If this alignment is successful then passing sequences will be written to a
+            functional fasta file whilst failing sequences will be written to a nonfunctional
+            fasta file with their sequence names annotated with the reason it failed.
+            The table below gives counts for passing and failing sequences. A table
+            containing just a sequence count indicates no filtering was requested by
+            providing a path to a reference sequence in the config file.
+            <h4>results</h4>
+            <p>
+            $(ffc_tbl)
+            </p>
+            <h4>reasons</h4>
+            <p>
+            $(ffr_tbl)
+            </p>
             <h3>further information</h3>
               <h4>UMI dinucleotide frequencies</h4>
               <p>

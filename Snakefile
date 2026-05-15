@@ -198,7 +198,8 @@ rule report:
         "postproc/{dataset}/{sample}/{sample}.fasta.rejected.csv",
         "postproc/{dataset}/{sample}/{sample}_di_nuc_freq.png",
         "postproc/{dataset}/{sample}/{sample}_minags.png",
-        "postproc/{dataset}/bottle2_report.csv"
+        "postproc/{dataset}/bottle2_report.csv",
+        "postproc/{dataset}/{sample}/{sample}_ff_results.csv"
     params:
         VERSION = VERSION,
         COMMIT = COMMIT

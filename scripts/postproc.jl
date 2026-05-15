@@ -42,8 +42,8 @@ if "ff_ref" in keys(config)
     ff_ref = config["ff_ref"]
 end
 
-if "rr_match_override" in keys(config)
-    ff_match = config["ff_match"]
+if "ff_match_override" in keys(config)
+    ff_match = config["ff_match_override"]
 end
 
 # check for fasta collection
@@ -97,7 +97,7 @@ if ! isnothing(ff_ref)
     CSV.write(snakemake.output[13], hk)
 else
     hk = DataFrame(sample=String[], sequences=Int[])
-    push!(hk,[seqs_file,length(ali_seqs)])
+    push!(hk,[basename(seqs_file),length(ali_seqs)])
     CSV.write(snakemake.output[13], hk)
 end
 
