@@ -726,7 +726,7 @@ version = "1.1.1"
 
 [[deps.SeededAlignment]]
 deps = ["BioSequences", "CSV", "DataFrames", "FASTX", "StatsBase"]
-git-tree-sha1 = "912b698192beabaf81d69c4000ec37761fc0bfcf"
+git-tree-sha1 = "301fa20c3c1ab20b176d988392a58caca25f538a"
 repo-rev = "main"
 repo-url = "https://github.com/HughMurrell/SeededAlignment.jl.git"
 uuid = "481cdb6f-2cd4-4f16-9496-25db73f63c93"

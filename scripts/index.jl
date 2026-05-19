@@ -85,6 +85,18 @@ joined_df = select(joined_df, [:Sample, :fs_used, :af_used, :q_used, :ma_used, :
 joined_df_tbl = format_tbl(joined_df)
 CSV.write(snakemake.output[2], joined_df)
 
+ff_df=DataFrame(Sample = String[], reference = String[], sequences = Int[], functional = Any[], nonfunctional = Any[], percentLost = Any[])
+for sample in sort(snakemake.params["SAMPLES"])
+    ff_d = CSV.read("postproc/$(dataset)/$(sample)/$(sample)_ff_results.csv",DataFrame)
+    rec=collect(ff_d[1,:])
+    while length(rec)<size(ff_df)[2]
+        push!(rec,missing)
+    end
+    push!(ff_df,rec[1:size(ff_df)[2]])
+end
+CSV.write(snakemake.output[3], ff_df)
+ff_df_tbl = format_tbl(ff_df)
+
 contam_df = CSV.read("porpid/$(dataset)/contam_report.csv", DataFrame)
 # contam_df = contam_df[contam_df[:,:discarded],:]
 contam_df = filter(row -> row.discarded == "true", contam_df)
@@ -247,6 +259,13 @@ html_str = html_str * """
     Summary of sequence output from porpid, those that were rejected and the
     final sequence count after filtering. Reads per sequence
     can be used to compare average depth across different samples. 
+""";
+
+html_str = html_str * """
+    <h3>functional filter results:</h3>
+    $(ff_df_tbl)
+    Summary of functional filter throughput. Those samples with missing entries in the table
+    did not undergo functional filtering because no reference was provided for them in the config file.
 """;
 
 open(snakemake.output[1],"w") do io

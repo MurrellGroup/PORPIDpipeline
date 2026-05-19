@@ -96,8 +96,8 @@ if ! isnothing(ff_ref)
     hk = filter_and_align(ff_ref,seqs_file,seqs_file[1:end-6]*"_functionals.fasta",seqs_file[1:end-6]*"_nonfunctionals.fasta", match_thresh=ff_match)
     CSV.write(snakemake.output[13], hk)
 else
-    hk = DataFrame(sample=String[], sequences=Int[])
-    push!(hk,[basename(seqs_file),length(ali_seqs)])
+    hk = DataFrame(sample=String[], reference=String[], sequences=Int[])
+    push!(hk,[basename(seqs_file)[1:end-6],"no_reference",length(ali_seqs)])
     CSV.write(snakemake.output[13], hk)
 end
 

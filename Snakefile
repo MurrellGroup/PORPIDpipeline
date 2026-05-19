@@ -211,7 +211,8 @@ rule report:
 rule index:
     input:
         expand("postproc/{dataset}/{sample}/{sample}-report.html", zip, dataset = DATASETS, sample = SAMPLES),
-        expand("postproc/{dataset}/{sample}/{sample}_qc_bins.csv", zip, dataset = DATASETS, sample = SAMPLES)
+        expand("postproc/{dataset}/{sample}/{sample}_qc_bins.csv", zip, dataset = DATASETS, sample = SAMPLES),
+        expand("postproc/{dataset}/{sample}/{sample}_ff_results.csv", zip, dataset = DATASETS, sample = SAMPLES)
     params:
         VERSION = VERSION,
         COMMIT = COMMIT,
@@ -237,7 +238,8 @@ rule index:
         contam_toggle = contam_toggle
     output:
         "postproc/{dataset}/{dataset}-index.html",
-        "postproc/{dataset}/{dataset}-sequence_report.csv"
+        "postproc/{dataset}/{dataset}-sequence_report.csv",
+        "postproc/{dataset}/{dataset}-functional-filter_report.csv"
     script:
         "scripts/index.jl"
         
