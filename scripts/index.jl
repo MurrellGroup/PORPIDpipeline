@@ -86,13 +86,23 @@ joined_df_tbl = format_tbl(joined_df)
 CSV.write(snakemake.output[2], joined_df)
 
 ff_df=DataFrame(Sample = String[], reference = String[], sequences = Int[], functional = Any[], nonfunctional = Any[], percentLost = Any[])
+ff_flag = false
 for sample in sort(snakemake.params["SAMPLES"])
     ff_d = CSV.read("postproc/$(dataset)/$(sample)/$(sample)_ff_results.csv",DataFrame)
     rec=collect(ff_d[1,:])
-    while length(rec)<size(ff_df)[2]
-        push!(rec,missing)
+    # while length(rec)<size(ff_df)[2]
+    #     push!(rec,missing)
+    # end
+    # @show rec[1], length(rec), size(ff_df)[2]
+    if length(rec)>=size(ff_df)[2]
+        push!(ff_df,rec[1:size(ff_df)[2]])
+        global ff_flag = true
     end
-    push!(ff_df,rec[1:size(ff_df)[2]])
+end
+if ff_flag
+    tot_rec=["Totals","",sum(ff_df[:,:sequences]),sum(ff_df[:,:functional]),sum(ff_df[:,:nonfunctional]),
+            Int(floor(100*round(sum(ff_df[:,:nonfunctional])/sum(ff_df[:,:sequences]),sigdigits=2))) ]
+    push!(ff_df,tot_rec)
 end
 CSV.write(snakemake.output[3], ff_df)
 ff_df_tbl = format_tbl(ff_df)
