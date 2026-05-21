@@ -35,9 +35,9 @@ pr_tbl = format_tbl(CSV.read(snakemake.input[8], DataFrame));
 di_nuc_fig = get_image_str(snakemake.input[9]);
 minags_fig = get_image_str(snakemake.input[10]);
 ff_table=CSV.read(snakemake.input[12], DataFrame)
-if size(ff_table)[2] > 5
-    ffc_tbl = format_tbl(ff_table[:,1:5])
-    ffr_tbl = format_tbl(ff_table[:,6:end])
+if size(ff_table)[2] > 6
+    ffc_tbl = format_tbl(ff_table[:,1:6])
+    ffr_tbl = format_tbl(ff_table[:,7:end])
 else
     ffc_tbl = format_tbl(ff_table[:,1:2])
     ffr_tbl = nothing

@@ -53,8 +53,8 @@ dist_thresh = 0.015      # default 0.015
 contam_toggle = "on"     # default "on", use "off" to disable
 #postproc
 agreement_thresh = 0.6   # default 0.7
-af_thresh = 0.20         # default 0.25 (drops smallest 25% of non-outlier reads)
-q_thresh = 0.999         # quantile threshold to eliminate large outliers
+af_thresh = 0.30         # default 0.25 (drops smallest 25% of non-outlier reads)
+q_thresh = 0.9           # quantile threshold to eliminate large outliers
                          # from artifact filter computation
                          # (0.99 sets max_fs at the 1% mark)
 panel_thresh = 50        # default 50

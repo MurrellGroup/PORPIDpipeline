@@ -17,6 +17,8 @@ function H704_init_template_proc(fasta_collection, panel_file,
     reject_seqs=[]
     reject_names=[]
     
+    println("$(basename(f)[1:end-6]): filtering $(length(seqs)) sequences ...")
+    
     # calculate af_cutoff before discarding seq that dont meet minimum agreement
     af_cutoff = artefact_cutoff(sizes,af_thresh,q_thresh)
     
@@ -43,8 +45,7 @@ function H704_init_template_proc(fasta_collection, panel_file,
     sizes = sizes[agreement_scores .>= agreement_thresh]
     agreement_scores = agreement_scores[agreement_scores .>= agreement_thresh]
     
-    
-    
+    println("$(basename(f)[1:end-6]): aligning $(length(seqs)) sequences ...")
     ali_seqs = mafft_align(seqs);
     
     #clean seqs

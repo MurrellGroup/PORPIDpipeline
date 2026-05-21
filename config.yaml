@@ -1,33 +1,78 @@
-Nanopore:
-#   sec_str_primer: "GGCTTAGGCATCTCCTATAGCAGGAAGAA"
-#   sec_str_primer: TAGGCATCTCCT
-#   cDNA_primer: CCGCTCCGTCCGACGACTCACTATAacagtgNNNNNNNNCTGGTGTGTARTTYTGCCAATCAG
-  5VM:
-    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAacagtgNNNNNNNNCTGGTGTGTARTTYTGCCAATCAG
-    sec_str_primer: TAGGCATCTCCTATGGCAGGAAGAA
-    panel: "panels/HIV1_COM_2017_5970-9012_DNA_stripped.fasta"
-    ff_ref: "panels/hxb2-env.fasta"
-  S30349_B_10_Aug:
-    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAcactcaNNNNNNNNCTGGTGTGTARTTYTGCCAATCAG
-    sec_str_primer: TAGGCATCTCCTATGGCAGGAAGAA
-    panel: "panels/HIV1_COM_2017_5970-9012_DNA_stripped.fasta"
-    ff_ref: "panels/hxb2-env.fasta"
-  S30402_B_10_May:
-    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAggtagcNNNNNNNNCTGGTGTGTARTTYTGCCAATCAG
-    sec_str_primer: TAGGCATCTCCTATGGCAGGAAGAA
-    panel: "panels/HIV1_COM_2017_5970-9012_DNA_stripped.fasta"
-    ff_ref: "panels/hxb2-env.fasta"
-  S50213_B_03_Jan:
-    cDNA_primer: CCGCTCCGTCCGACGACTCACTATActatacNNNNNNNNCTGGTGTGTARTTYTGCCAATCAG
-    sec_str_primer: TAGGCATCTCCTATGGCAGGAAGAA
-    panel: "panels/HIV1_COM_2017_5970-9012_DNA_stripped.fasta"
-    fs_override: 3
-    af_override: 0.16
-    q_override: 0.83
-    ma_override: 0.5
-    ff_ref: "panels/hxb2-env.fasta"
-  S50616_B_98_Nov:
-    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAatcacgNNNNNNNNCTGGTGTGTARTTYTGCCAATCAG
-    sec_str_primer: TAGGCATCTCCTATGGCAGGAAGAA
-    panel: "panels/HIV1_COM_2017_5970-9012_DNA_stripped.fasta"
-    ff_ref: "panels/hxb2-env.fasta"
+HVTN805_UCT_NICD_03:
+  CAP037_4180_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAcgagtaNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary_panel.fasta
+    sec_str_primer: GGCTTAGGCATCTCCTATAGCAGGAAGAA
+    ff_ref: panels/hxb2-env.fasta
+  CAP200_4240_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAtagagcNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary_panel.fasta
+    sec_str_primer: GGCTTAGGCATCTCCTATAGCAGGAAGAA
+    ff_ref: panels/hxb2-env.fasta
+  CAP372_4250_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAgtcatcNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary_panel.fasta
+    sec_str_primer: GGCTTAGGCATCTCCTATAGCAGGAAGAA
+    ff_ref: panels/hxb2-env.fasta
+  CAP377_4170_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAgacagaNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary_panel.fasta
+    sec_str_primer: GGCTTAGGCATCTCCTATAGCAGGAAGAA
+    ff_ref: panels/hxb2-env.fasta
+  V805_0217_400_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAacagtgNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary-cDNA_Alt-Fwd_panel.fasta
+    sec_str_primer: TAGGCATCTCCTATGGCAGGAAGAAG
+    ff_ref: panels/hxb2-env.fasta
+  V805_0309_480_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAcactcaNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary_panel.fasta
+    sec_str_primer: GGCTTAGGCATCTCCTATAGCAGGAAGAA
+    ff_ref: panels/hxb2-env.fasta
+  V805_0309_800_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAggtagcNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary_panel.fasta
+    sec_str_primer: GGCTTAGGCATCTCCTATAGCAGGAAGAA
+    ff_ref: panels/hxb2-env.fasta
+  V805_0944_800_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATActatacNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary_panel.fasta
+    sec_str_primer: GGCTTAGGCATCTCCTATAGCAGGAAGAA
+    ff_ref: panels/hxb2-env.fasta
+  V805_0967_400_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAatcacgNNNNNNNNCTGGTGTGTARTTYTGCCARTCAG
+    # panel: panels/HVTN705_REN_Alternate_panel.fasta
+    panel: panels/HVTN705_REN_Alt-cDNA_Primary-Fwd_panel.fasta
+    sec_str_primer: TAGGCATCTCCTATGGCAGGAAGAAG
+    ff_ref: panels/hxb2-env.fasta
+  V805_0967_800_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAactgatNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary_panel.fasta
+    sec_str_primer: GGCTTAGGCATCTCCTATAGCAGGAAGAA
+    ff_ref: panels/hxb2-env.fasta
+  V805_1298_210_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAtgaccaNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary_panel.fasta
+    sec_str_primer: GGCTTAGGCATCTCCTATAGCAGGAAGAA
+    ff_ref: panels/hxb2-env.fasta
+  V805_1298_220_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAgctcatNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary_panel.fasta
+    sec_str_primer: GGCTTAGGCATCTCCTATAGCAGGAAGAA
+    ff_ref: panels/hxb2-env.fasta
+  V805_1670_400_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAcgatgtNNNNNNNNCTGGTGTGTARTTYTGCCARTCAG
+    # panel: panels/HVTN705_REN_Alternate_panel.fasta
+    panel: panels/HVTN705_REN_Alt-cDNA_Primary-Fwd_panel.fasta
+    sec_str_primer: TAGGCATCTCCTATGGCAGGAAGAAG
+    ff_ref: panels/hxb2-env.fasta
+  V805_1848_800_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAatgctgNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary_panel.fasta
+    sec_str_primer: GGCTTAGGCATCTCCTATAGCAGGAAGAA
+    ff_ref: panels/hxb2-env.fasta
+  V805_2788_480_REN_pblib:
+    cDNA_primer: CCGCTCCGTCCGACGACTCACTATAacgatcNNNNNNNNGGTCTTAAAGGYACCTGAGGTCTGACTGGAAAGCC
+    panel: panels/HVTN705_REN_Primary_panel.fasta
+    sec_str_primer: GGCTTAGGCATCTCCTATAGCAGGAAGAA
+    ff_ref: panels/hxb2-env.fasta
