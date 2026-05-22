@@ -220,8 +220,14 @@ end
 
 function ali2MDS(ali_seqs,sizes,colors) #peraps another MDS allowing annotations
     dist_mat = pairwise_dist(ali_seqs,normalized_non_gap_hamming);
-    mds = MultivariateStats.transform(fit(MDS, dist_mat, maxoutdim=2, distances=true))
-    return MDS_plot(mds,sizes = sizes, color_vec = colors)
+    # @show size(dist_mat)
+    try
+        mds = MultivariateStats.transform(fit(MDS, dist_mat, maxoutdim=2, distances=true))
+        return MDS_plot(mds,sizes = sizes, color_vec = colors)
+    catch
+        println("MDS failed, expect an empty plot")
+        return figure(figsize=(6,5))
+    end
 end
 
 function extract_region(ali_seqs,ref_profile)

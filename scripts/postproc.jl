@@ -92,6 +92,7 @@ CSV.write(snakemake.output[11], sort!(tag_df, [:Sample, :tags, :fs], rev = [fals
 ali_seqs,seqnames,af_cutoff = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh, af_thresh=af_thresh,q_thresh=q_thresh)
 
 seqs_file=snakemake.output[4]
+    
 if ! isnothing(ff_ref)
     hk = filter_and_align(ff_ref,seqs_file,seqs_file[1:end-6]*"_functionals.fasta",seqs_file[1:end-6]*"_nonfunctionals.fasta", match_thresh=ff_match)
     CSV.write(snakemake.output[13], hk)

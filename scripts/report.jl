@@ -178,7 +178,8 @@ html_str = html_str_hdr * """
                 single nucleotide substitution matrix between the global consensus and
                 query sequence, and estimates the overall mutation rate and a G>A
                 accelerator parameter from the data. Points are colored by probability that
-                the G>A accelerator parameter is greater than 1.
+                the G>A accelerator parameter is greater than 1. An empty plot usually
+                means that the projection onto 2 dimensions failed to converge.
             <p>
             <img src="data:image/png;base64,$(mds_fig)
             "alt="" width=100% style="max-width: 700px;">
