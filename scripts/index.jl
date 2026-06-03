@@ -60,8 +60,8 @@ for sample in sort(snakemake.params["SAMPLES"])
     r_seqs, r_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.fasta") #rejected sequences
     f_seqs, f_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta") #final sequences
     sample_reject_df = CSV.read("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.csv", DataFrame) #reject split
-    r_ma_seq_number = sample_reject_df[1,"count"]
-    r_art_seq_number = sample_reject_df[2,"count"]
+    r_art_seq_number = sample_reject_df[1,"count"]
+    r_ma_seq_number = sample_reject_df[2,"count"]
     r_pan_seq_number = sample_reject_df[3,"count"]
     
     p_seq_number = length(p_seqs)
@@ -81,7 +81,8 @@ seq_counts_df[!, :Final_Seqs] = convert.(Int, seq_counts_df[:, :Final_Seqs])
 joined_df = innerjoin(seq_counts_df, demux_df, on = :Sample)
 joined_df = rename!(joined_df,:Count => :Read_Count) #change Counts column name to Read_Count
 joined_df[!, :Reads_per_Seq] = joined_df[!, :Read_Count] ./ joined_df[!, :Porpid_Seqs]
-joined_df = select(joined_df, [:Sample, :fs_used, :af_used, :q_used, :ma_used, :Reads_per_Seq], :Porpid_Seqs, :Rej_Min_Ag, :Rej_Artefact, :Rej_Contam, :Rej_Panel, :Rej_Seqs, :Final_Seqs)
+joined_df = select(joined_df, [:Sample, :fs_used, :af_used, :q_used, :ma_used, :Reads_per_Seq], :Porpid_Seqs,
+            :Rej_Artefact, :Rej_Min_Ag, :Rej_Contam, :Rej_Panel, :Rej_Seqs, :Final_Seqs)
 joined_df_tbl = format_tbl(joined_df)
 CSV.write(snakemake.output[2], joined_df)
 
