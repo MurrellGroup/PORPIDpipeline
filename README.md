@@ -8,7 +8,7 @@ now upgraded to Julia version 1.10.5
 
 ## Quick start
 
-### Dependencies (on an ubuntu machine)
+### Dependencies (on a fresh ubuntu machine with root access)
 
 - first update all apps
    - `apt update`
@@ -222,60 +222,6 @@ For more info on Snakemake, see:
 
 [https://snakemake.readthedocs.io/en/stable/]
 
-## Conda setup
-
-Some (without root access) may prefer to setup PORPIDpipeline in a **conda** environment.
-
-To accomplish this, first install `anaconda` locally. (the install script allows you to choose
-the location for anaconda, by default `/home/user` but choose something else if
-you want something accessable to a group of users)
-
-```bash
-curl –O https://repo.anaconda.com/archive/Anaconda3-2021.05-Linux-x86_64.sh > Anaconda3-2021.05-Linux-x86_64.sh
-bash Anaconda3-2021.05-Linux-x86_64.sh
-```
-
-then log out and log in again and check that you are in the `base` environment.
-
-`conda` is very slow, so we suggest installing `mamba` in the conda `base` environment:
-
-```bash
-conda install -n base -c conda-forge mamba
-```
-clone the PORPIDpipeline repository
-
-```bash
-cd ~  # or some other directory used for your anaconda installation
-git clone https://github.com/MurrellGroup/PORPIDpipeline.git
-```
-
-and then all the PORPIDpipeline dependencies including `julia` version `1.10.5`
-( as listed in the PORPIDpipeline conda environment spec in `environment.yaml`),
-can be installed in a `conda` environment via `mamba` using the commands:
-
-```bash
-conda config --add channels conda-forge
-conda config --add channels bioconda
-mamba env create --file environment.yaml
-```
-
-Note that if you did use *some other directory* than your home directory for
-installing the PORPIDpipeline repository then you have to inform Julia where
-your packages are stored by placing the following command in your `.bashrc`
-file:
-
-```bash
-# set path to .julia files
-export JULIA_DEPOT_PATH="/some/other/directory/.julia"
-```
-
-to complete the setup, activate the new PORPIDpipeline conda environment, 
-
-```bash
-conda activate PORPIDpipeline
-```
-
-and continue with the `julia` package environment setup as outlined above in the *quick start* section.
 
 ## Cluster setup
 
@@ -413,8 +359,6 @@ We have not attempted this yet, and it would probably require writing a
 `slurm` efficient version of the `snakefile`. 
 
 ## Documentation
-
-
 
 An introduction to PacBio sequencing and an explanation for each *PORPIDpipeline* rule 
 is given in the set of introductory slides packaged with this repository.

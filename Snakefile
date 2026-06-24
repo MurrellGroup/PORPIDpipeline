@@ -40,11 +40,11 @@ max_reads = 100000       # default 100000 reads per sample,
                          # use something large for no downsampling
 verbose = "false"        # default "false", use "true" to debug demux
 #porpid
-fs_thresh = 1            # default 1 (or 5 if af_thresh is 0)
+fs_thresh = 5            # default 1 (or 5 if af_thresh is 0)
 lda_thresh = 0.995       # default 0.995
 #consensus
 agreement_thresh = 0.7   # default 0.7
-af_thresh = 0.35         # default 0.35 (drops smallest 35% of CCS reads)
+af_thresh = 0.00         # default 0.35 (drops smallest 35% of CCS reads)
 #contam
 cluster_thresh = 0.015   # default 0.015
 proportion_thresh = 0.2  # default 0.2
