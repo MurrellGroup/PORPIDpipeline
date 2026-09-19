@@ -92,13 +92,20 @@ CSV.write(snakemake.output[11], sort!(tag_df, [:Sample, :tags, :fs], rev = [fals
 ali_seqs,seqnames,af_cutoff = H704_init_template_proc(fasta_collection, panel_file, snakemake.output[1], snakemake.output[2],  snakemake.output[3], snakemake.output[4],  agreement_thresh=agreement_thresh, panel_thresh=panel_thresh, af_thresh=af_thresh,q_thresh=q_thresh)
 
 seqs_file=snakemake.output[4]
-    
+
+# now save the collapsed seqs.
+col_seqs, col_sizes, col_names = variant_collapse(ali_seqs, prefix = "$(sample)_v")
+write_fasta(seqs_file[1:end-6]*"_collapsed.fasta", col_seqs, names = col_names)
+
+# now perform functional filter
 if ! isnothing(ff_ref)
-    hk = filter_and_align(ff_ref,seqs_file,seqs_file[1:end-6]*"_functionals.fasta",seqs_file[1:end-6]*"_nonfunctionals.fasta", match_thresh=ff_match)
+    hk = filter_and_align(ff_ref,seqs_file[1:end-6]*"_collapsed.fasta",
+                                 seqs_file[1:end-6]*"_functionals.fasta",
+                                 seqs_file[1:end-6]*"_nonfunctionals.fasta", match_thresh=ff_match)
     CSV.write(snakemake.output[13], hk)
 else
-    hk = DataFrame(sample=String[], reference=String[], sequences=Int[])
-    push!(hk,[basename(seqs_file)[1:end-6],"no_reference",length(ali_seqs)])
+    hk = DataFrame(sample=String[], reference=String[], collapsed=Int[])
+    push!(hk,[basename(seqs_file)[1:end-6],"no_reference",length(col_seqs)])
     CSV.write(snakemake.output[13], hk)
 end
 
@@ -157,3 +164,4 @@ sp_minag_rejects = @linq sp_selected |> where(:tags .== "minag-reject")
 sp_selected = vcat(sp_reals, sp_minag_rejects)
 fig = minag_position_plot(sample_dir,sp_selected,ma_thresh=agreement_thresh)
 fig.savefig(snakemake.output[12]; transparent = true, dpi = 200, bbox_inches = "tight")
+

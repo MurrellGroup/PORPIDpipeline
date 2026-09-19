@@ -33,7 +33,7 @@ def bottle2_input(wildcards):
 # PORPIDpipeline parameters
 # demux
 chunk_size = 100000      # default 100000
-error_rate = 0.05        # default 0.01
+error_rate = 0.01        # default 0.01
 min_length = 2100        # default 2100
 max_length = 4300        # default 4300
 primer_tol = 1           # default 1 (allow 1 error when locating primers)
@@ -52,7 +52,7 @@ proportion_thresh = 0.2  # default 0.2
 dist_thresh = 0.015      # default 0.015
 contam_toggle = "on"     # default "on", use "off" to disable
 #postproc
-agreement_thresh = 0.6   # default 0.7
+agreement_thresh = 0.7   # default 0.7
 af_thresh = 0.25         # default 0.25 (drops smallest 25% of non-outlier reads)
 q_thresh = 0.99          # quantile threshold to eliminate large outliers
                          # from artifact filter computation
@@ -61,7 +61,7 @@ panel_thresh = 50        # default 50
 ff_match = 0.7           # default 0.7, adjust to suit ff reference
 #tar
 degap = "true"           # default "true", use "false" to disable
-collapse = "true"        # default "true", use "false" to disable
+collapse = "true"        # depreceated, collapse is always performed
 porpid_archive = "part"  # default "full", use "part" for partial archive
 
 rule all:

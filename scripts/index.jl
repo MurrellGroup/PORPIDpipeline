@@ -44,7 +44,7 @@ af_thresh = snakemake.params["af_thresh"]
 q_thresh = snakemake.params["q_thresh"]
 ma_thresh = snakemake.params["agreement_thresh"]
 seq_counts_df = DataFrame(Sample = [], fs_used = [], af_used = [], q_used = [], ma_used = [], Porpid_Seqs = [],
-            Rej_Artefact = [], Rej_Contam = [], Rej_Min_Ag = [], Rej_Panel = [], Rej_Seqs = [], Final_Seqs = [])
+            Rej_Artefact = [], Rej_Contam = [], Rej_Min_Ag = [], Rej_Panel = [], Rej_Seqs = [], Final_Seqs = [], Collapsed_Seqs=[])
 for sample in sort(snakemake.params["SAMPLES"])
     "fs_override" in keys(cfg[sample]) ? fs_used = cfg[sample]["fs_override"] : fs_used = fs_thresh
     "af_override" in keys(cfg[sample]) ? af_used = cfg[sample]["af_override"] : af_used = af_thresh
@@ -59,6 +59,7 @@ for sample in sort(snakemake.params["SAMPLES"])
     end
     r_seqs, r_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.fasta") #rejected sequences
     f_seqs, f_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample).fasta") #final sequences
+    c_seqs, c_seq_names = read_fasta("postproc/$(dataset)/$(sample)/$(sample)_collapsed.fasta") #collapsed sequences
     sample_reject_df = CSV.read("postproc/$(dataset)/$(sample)/$(sample).fasta.rejected.csv", DataFrame) #reject split
     r_art_seq_number = sample_reject_df[1,"count"]
     r_ma_seq_number = sample_reject_df[2,"count"]
@@ -67,8 +68,9 @@ for sample in sort(snakemake.params["SAMPLES"])
     p_seq_number = length(p_seqs)
     r_seq_number = length(r_seqs) + c_contam_seq_number
     f_seq_number = length(f_seqs)
+    c_seq_number = length(c_seqs)
     
-    push!(seq_counts_df, [sample, fs_used, af_used, q_used, ma_used, p_seq_number, r_art_seq_number, c_contam_seq_number, r_ma_seq_number, r_pan_seq_number, r_seq_number, f_seq_number])
+    push!(seq_counts_df, [sample, fs_used, af_used, q_used, ma_used, p_seq_number, r_art_seq_number, c_contam_seq_number, r_ma_seq_number, r_pan_seq_number, r_seq_number, f_seq_number, c_seq_number])
 end
 seq_counts_df[!, :Porpid_Seqs] = convert.(Int, seq_counts_df[:, :Porpid_Seqs])
 seq_counts_df[!, :Rej_Min_Ag] = convert.(Int, seq_counts_df[:, :Rej_Min_Ag])
@@ -76,13 +78,14 @@ seq_counts_df[!, :Rej_Artefact] = convert.(Int, seq_counts_df[:, :Rej_Artefact])
 seq_counts_df[!, :Rej_Panel] = convert.(Int, seq_counts_df[:, :Rej_Panel])
 seq_counts_df[!, :Rej_Seqs] = convert.(Int, seq_counts_df[:, :Rej_Seqs])
 seq_counts_df[!, :Final_Seqs] = convert.(Int, seq_counts_df[:, :Final_Seqs])
+seq_counts_df[!, :Collapsed_Seqs] = convert.(Int, seq_counts_df[:, :Collapsed_Seqs])
 
 #create final table with sequence number and reads per template for porpid seqs
 joined_df = innerjoin(seq_counts_df, demux_df, on = :Sample)
 joined_df = rename!(joined_df,:Count => :Read_Count) #change Counts column name to Read_Count
 joined_df[!, :Reads_per_Seq] = joined_df[!, :Read_Count] ./ joined_df[!, :Porpid_Seqs]
 joined_df = select(joined_df, [:Sample, :fs_used, :af_used, :q_used, :ma_used, :Reads_per_Seq], :Porpid_Seqs,
-            :Rej_Artefact, :Rej_Min_Ag, :Rej_Contam, :Rej_Panel, :Rej_Seqs, :Final_Seqs)
+            :Rej_Artefact, :Rej_Min_Ag, :Rej_Contam, :Rej_Panel, :Rej_Seqs, :Final_Seqs, :Collapsed_Seqs)
 joined_df_tbl = format_tbl(joined_df)
 CSV.write(snakemake.output[2], joined_df)
 

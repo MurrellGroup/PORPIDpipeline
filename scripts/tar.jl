@@ -30,26 +30,27 @@ if degap_flag == "true"
     println("degapping took $(t1f - t1s) seconds.")
 end
 
-collapse_flag = snakemake.params["collapse"]
-println( "collapse flag = $(collapse_flag)")
-samples = snakemake.params["samples"]
-if collapse_flag == "true"
-    t2s = time()
-    println("generating collapsed postproc sequences...")
-    run(`mkdir -p $(postproc_dir)/collapsed_fasta/`)
-    for sample in samples
-        infile = "$(postproc_dir)/$(sample)/$(sample).fasta"
-        outfile = "$(postproc_dir)/collapsed_fasta/$(sample)-collapsed.fasta"
-        print(".")
-        names, descripts, seqs = read_fasta_with_names_and_descriptions(infile)
-        col_seqs, col_sizes, col_names = variant_collapse(seqs,
-            prefix = "$(sample)_v")
-        write_fasta(outfile, col_seqs, names = col_names)
-    end
-    println()
-    t2f = time()
-    println("collapsing took $(t2f - t2s) seconds.")
-end
+# this is now done inside the postproc script
+# collapse_flag = snakemake.params["collapse"]
+# println( "collapse flag = $(collapse_flag)")
+# samples = snakemake.params["samples"]
+# if collapse_flag == "true"
+#     t2s = time()
+#     println("generating collapsed postproc sequences...")
+#     run(`mkdir -p $(postproc_dir)/collapsed_fasta/`)
+#     for sample in samples
+#         infile = "$(postproc_dir)/$(sample)/$(sample).fasta"
+#         outfile = "$(postproc_dir)/collapsed_fasta/$(sample)-collapsed.fasta"
+#         print(".")
+#         names, descripts, seqs = read_fasta_with_names_and_descriptions(infile)
+#         col_seqs, col_sizes, col_names = variant_collapse(seqs,
+#             prefix = "$(sample)_v")
+#         write_fasta(outfile, col_seqs, names = col_names)
+#     end
+#     println()
+#     t2f = time()
+#     println("collapsing took $(t2f - t2s) seconds.")
+# end
 
 # and now tar and zip both porpid and postproc directories
 # first copy some reports from porpid to postproc
