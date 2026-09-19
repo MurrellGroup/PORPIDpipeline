@@ -131,10 +131,11 @@ af_thresh = 0.25         # default 0.25 (drops smallest 25% of CCS reads)
 q_thresh = 0.99          # quantile threshold to eliminate large outliers
                          # from artifact filter computation
                          # (0.99 sets max_fs at the 1% mark)
-panel_thresh = 40        # default 50
+panel_thresh = 50        # default 50
+ff_match = 0.7           # default 0.7, adjust to suit ff reference
+                         # requires a ff_ref path for each sample in the config file
 #tar
 degap = "true"           # default "true", use "false" to disable
-collapse = "true"        # default "true", use "false" to disable
 porpid_archive = "part"  # default "full", use "part" for partial archive
 ```
 
