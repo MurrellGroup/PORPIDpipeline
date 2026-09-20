@@ -99,14 +99,22 @@ write_fasta(seqs_file[1:end-6]*"_collapsed.fasta", col_seqs, names = col_names)
 
 # now perform functional filter
 if ! isnothing(ff_ref)
-    hk = filter_and_align(ff_ref,seqs_file[1:end-6]*"_collapsed.fasta",
+    hk = filter_and_align(ff_ref,seqs_file[1:end-6]*".fasta",
                                  seqs_file[1:end-6]*"_functionals.fasta",
                                  seqs_file[1:end-6]*"_nonfunctionals.fasta", match_thresh=ff_match)
     CSV.write(snakemake.output[13], hk)
 else
-    hk = DataFrame(sample=String[], reference=String[], collapsed=Int[])
+    hk = DataFrame(sample=String[], reference=String[], sequences=Int[])
     push!(hk,[basename(seqs_file)[1:end-6],"no_reference",length(col_seqs)])
     CSV.write(snakemake.output[13], hk)
+end
+
+# now save the collapsed functional seqs.
+if ! isnothing(ff_ref)
+    f_names, f_descripts, f_seqs = read_fasta_with_names_and_descriptions(seqs_file[1:end-6]*"_functionals.fasta")
+    # the first seq is the ref so we collapse the rest of them
+    col_f_seqs, col_f_sizes, col_f_names = variant_collapse(f_seqs[2:end], prefix = "$(sample)_v")
+    write_fasta(seqs_file[1:end-6]*"_functionals_collapsed.fasta", col_f_seqs, names = col_f_names)
 end
 
 sp_selected = @linq tag_df |> where(:Sample .== sample)
