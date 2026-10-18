@@ -1,4 +1,5 @@
 # PORPIDpipeline  
+## (trying to upgrade to Julia 1.13.2, not stable yet)
 ## (including an experimental functional filter)
 
 by Alec Pankow and Ben Murrell, now maintained by Hugh Murrell

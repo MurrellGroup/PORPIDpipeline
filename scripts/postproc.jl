@@ -117,8 +117,11 @@ if ! isnothing(ff_ref)
     write_fasta(seqs_file[1:end-6]*"_functionals_collapsed.fasta", col_f_seqs, names = col_f_names)
 end
 
+
 sp_selected = @linq tag_df |> where(:Sample .== sample)
+
 sp_selected = @linq sp_selected |> where(:tags .!= "BPB-rejects")
+
 fig = family_size_umi_len_stripplot(sp_selected,fs_thresh=fs_thresh,
         af_thresh=af_thresh, q_thresh=q_thresh,
         af_cutoff=af_cutoff, q_cutoff=q_cutoff)
@@ -141,10 +144,16 @@ fig.savefig(snakemake.output[6];
     dpi = 200,
     bbox_inches = "tight")
 
+println("at line 147")
 selected = @linq tag_df |> where(:Sample .== sample)
+
 gdf = DataFramesMeta.groupby(selected, :tags)
+
+println("at line 152")
+@show gdf
 summary = @combine gdf cols(AsTable) = ( porpid_result=first(:tags), n_UMI_families=length(:fs), n_CCS=sum(:fs) )
-# println( summary[!, [:porpid_result,:n_UMI_families,:n_CCS]] )
+@show summary
+println( summary[!, [:porpid_result,:n_UMI_families,:n_CCS]] )
 CSV.write(snakemake.output[7],summary[!, [:porpid_result,:n_UMI_families,:n_CCS]])
 
 umi_dir=snakemake.input[3]*"/"*sample
