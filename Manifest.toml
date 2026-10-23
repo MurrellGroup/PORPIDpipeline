@@ -311,10 +311,10 @@ version = "1.11.0"
 
 [[deps.Distributions]]
 deps = ["AliasTables", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "Roots", "SpecialFunctions", "Statistics", "StatsAPI", "StatsBase", "StatsFuns"]
-git-tree-sha1 = "a958ab3a40c755563f5e1405c0846cb0446bf19d"
+git-tree-sha1 = "2ddbc341251ed713d39e503b504593a5d6789551"
 registries = "General"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.25.131"
+version = "0.25.132"
 
     [deps.Distributions.extensions]
     DistributionsChainRulesCoreExt = "ChainRulesCore"
@@ -329,10 +329,11 @@ version = "0.25.131"
     Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[deps.DocStringExtensions]]
-git-tree-sha1 = "8eeb56c16e74c6592afc69d2bb9e6082ba6aa850"
+deps = ["PrecompileTools"]
+git-tree-sha1 = "c0767b264422f9b301a3bdf70513ff3c733f59f7"
 registries = "General"
 uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
-version = "0.10.0"
+version = "0.10.1"
 
 [[deps.Downloads]]
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
@@ -448,10 +449,10 @@ uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 version = "1.11.0"
 
 [[deps.InverseFunctions]]
-git-tree-sha1 = "a779299d77cd080bf77b97535acecd73e1c5e5cb"
+git-tree-sha1 = "5cc6ad3e2bfc75a11eed92632ee341d37f4a4536"
 registries = "General"
 uuid = "3587e190-3f89-42d0-90ee-14403ec27112"
-version = "0.1.17"
+version = "0.1.18"
 weakdeps = ["Dates", "Test"]
 
     [deps.InverseFunctions.extensions]
@@ -704,7 +705,7 @@ version = "0.1.0"
 deps = ["BioSequences", "CSV", "CodecZlib", "ColorSchemes", "Colors", "Compat", "Compose", "DPMeansClustering", "DataFrames", "DataFramesMeta", "Distributed", "Distributions", "FASTX", "FastTree_jll", "HypothesisTests", "IterTools", "LinearAlgebra", "MAFFT_jll", "MolecularEvolution", "MultivariateStats", "NextGenSeqUtils", "PORPID", "PrettyTables", "PyCall", "PyPlot", "RobustAmpliconDenoising", "Seaborn", "SeededAlignment", "StatsBase", "StatsFuns"]
 path = "."
 uuid = "7caf9691-7b1e-49a7-bd1f-2a27e55f6b24"
-version = "1.10.5"
+version = "1.13.2"
 
 [[deps.Pandas]]
 deps = ["Compat", "DataValues", "Dates", "IteratorInterfaceExtensions", "Lazy", "OrderedCollections", "Pkg", "PyCall", "Statistics", "TableTraits", "TableTraitsUtils", "Tables"]
@@ -780,10 +781,10 @@ version = "1.4.0"
 
 [[deps.PyCall]]
 deps = ["Conda", "Dates", "Libdl", "LinearAlgebra", "MacroTools", "Serialization", "VersionParsing"]
-git-tree-sha1 = "9816a3826b0ebf49ab4926e2b18842ad8b5c8f04"
+git-tree-sha1 = "9d5dfe8ead7c9b0fbbc1c085da0680eae4af5a48"
 registries = "General"
 uuid = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
-version = "1.96.4"
+version = "1.97.0"
 
 [[deps.PyPlot]]
 deps = ["Colors", "LaTeXStrings", "PyCall", "Sockets", "Test", "VersionParsing"]

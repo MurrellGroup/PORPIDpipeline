@@ -144,16 +144,15 @@ fig.savefig(snakemake.output[6];
     dpi = 200,
     bbox_inches = "tight")
 
-println("at line 147")
 selected = @linq tag_df |> where(:Sample .== sample)
 
-gdf = DataFramesMeta.groupby(selected, :tags)
+tags=union(selected[!,:tags])
+summary = DataFrame(porpid_result=[],n_UMI_families=[],n_CCS=[])
+for tag in tags
+    selected_tags = @linq selected |> where(:tags .== tag)
+    push!(summary,[tag,length(selected_tags[!,:fs]),sum(selected_tags[!,:fs])])
+end
 
-println("at line 152")
-@show gdf
-summary = @combine gdf cols(AsTable) = ( porpid_result=first(:tags), n_UMI_families=length(:fs), n_CCS=sum(:fs) )
-@show summary
-println( summary[!, [:porpid_result,:n_UMI_families,:n_CCS]] )
 CSV.write(snakemake.output[7],summary[!, [:porpid_result,:n_UMI_families,:n_CCS]])
 
 umi_dir=snakemake.input[3]*"/"*sample

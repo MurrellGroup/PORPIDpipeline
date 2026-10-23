@@ -1,6 +1,6 @@
 name = "PORPIDpipeline"
 uuid = "7caf9691-7b1e-49a7-bd1f-2a27e55f6b24"
-version = "1.10.5"
+version = "1.13.2"
 authors = ["Hugh Murrell <hugh.murrell@gmail.com>", "Ben Murrell <murrellb@gmail.com>", "Alec Pankow <alec.pankow@gmail.com>"]
 
 [deps]
@@ -44,4 +44,4 @@ RobustAmpliconDenoising = {rev = "main", url = "https://github.com/MurrellGroup/
 SeededAlignment = {rev = "main", url = "https://github.com/HughMurrell/SeededAlignment.jl.git"}
 
 [compat]
-julia = "1.10.5"
+julia = "1.13.2"

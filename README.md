@@ -1,14 +1,13 @@
 # PORPIDpipeline  
-## (trying to upgrade to Julia 1.13.2, not stable yet)
-## (including an experimental functional filter)
+## Branch: nanopore
 
 by Alec Pankow and Ben Murrell, now maintained by Hugh Murrell
 
-now upgraded to Julia version 1.10.5 
+now upgraded to Julia version 1.13.2 
 
 now enhanced to cater for Nanopore input.
 
-## Branch: nanopore (including the new Nanopore demux algorithm)
+now includes an experimental functional filter
 
 ## Quick start
 
@@ -24,7 +23,7 @@ now enhanced to cater for Nanopore input.
   - `apt-get install python3-seaborn`
 
 
-### Julia version 1.10.5
+### Julia version 1.13.2
 
 We recommend you use the `juliaup` version manager to install julia.
 from a terminal you can do this as follows:
@@ -35,7 +34,7 @@ curl -fsSL https://install.julialang.org | sh
 
 This should install the Julia version manager, `juliaup` as well as
 the latest version of Julia. To find out how to use the version manager 
-to makesure you have version 1.10.5 as your default, go here:
+to makesure you have version 1.13.2 as your default, go here:
 
 [https://github.com/JuliaLang/juliaup]
 
@@ -54,12 +53,12 @@ juliaup status
 julia --version
 ```
 
-If the version number is not 1.10.5 then you need to use `juliaup` to install
+If the version number is not 1.13.2 then you need to use `juliaup` to install
 that version and make it the default. 
 
 ```bash
-juliaup add 1.10.5
-juliaup default 1.10.5
+juliaup add 1.13.2
+juliaup default 1.13.2
 ```
 
 for further details concerning `juliaup` go here:

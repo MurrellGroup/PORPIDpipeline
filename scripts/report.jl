@@ -16,7 +16,7 @@ end
 
 function format_tbl(df; font="12px")
     # tbl_fmt = pretty_table(String, df; backend = Val(:html), alignment=:l, tf=tf_html_dark)
-    tbl_fmt = pretty_table(String, df; backend = :html, alignment=:l) #, tf=tf_html_dark)
+    tbl_fmt = pretty_table(String, df; backend = :html, alignment=:l, show_first_column_label_only = true)
     tbl_fmt = replace(tbl_fmt, "<table>" => "<div class=\"data-frame\"><table class=\"table table-striped\"; style=\"font-size:$(font);\">")
     tbl_fmt = replace(tbl_fmt, "</table>" => "</table></div>")
     return tbl_fmt
