@@ -11,7 +11,8 @@ now includes an experimental functional filter
 
 ## Quick start
 
-### Dependencies (on a fresh ubuntu machine under root)
+### Dependencies 
+(on a fresh ubuntu machine with at least 8 GB memory and under root)
 
 - first update all apps
    - `apt update`
