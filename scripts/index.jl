@@ -87,7 +87,15 @@ joined_df = rename!(joined_df,:Count => :Read_Count) #change Counts column name 
 joined_df[!, :Reads_per_Seq] = joined_df[!, :Read_Count] ./ joined_df[!, :Porpid_Seqs]
 joined_df = select(joined_df, [:Sample, :fs_used, :af_used, :q_used, :ma_used, :Reads_per_Seq], :Porpid_Seqs,
             :Rej_Artefact, :Rej_Min_Ag, :Rej_Contam, :Rej_Panel, :Rej_Seqs, :Final_Seqs, :Collapsed_Seqs)
+
+#create TOTALS record
+tot_rec=["Totals",missing,missing,missing,missing,missing,sum(joined_df[:,:Porpid_Seqs]),
+            sum(joined_df[:,:Rej_Artefact]), sum(joined_df[:,:Rej_Min_Ag]), sum(joined_df[:,:Rej_Contam]),
+            sum(joined_df[:,:Rej_Panel]), sum(joined_df[:,:Rej_Seqs]), sum(joined_df[:,:Final_Seqs]),
+            sum(joined_df[:,:Collapsed_Seqs]) ]
+push!(joined_df,tot_rec, promote=true)
 joined_df_tbl = format_tbl(joined_df)
+
 CSV.write(snakemake.output[2], joined_df)
 
 ff_df=DataFrame(Sample = String[], reference = String[], sequences = Int[], functional = Any[], nonfunctional = Any[], percentLost = Any[], collapsedFunctionals = Any[])
@@ -120,7 +128,7 @@ ff_df_tbl = format_tbl(ff_df)
 
 contam_df = CSV.read("porpid/$(dataset)/contam_report.csv", DataFrame)
 # contam_df = contam_df[contam_df[:,:discarded],:]
-contam_df = filter(row -> row.discarded == "true", contam_df)
+contam_df = filter(row -> row.discarded == true, contam_df)
 contam_df = select(contam_df, :sample, :sequence_name, :nearest_nonself_variant, :nearest_nonself_distance)
 contam_tbl = format_tbl(contam_df,font="8px")
 num_discarded = nrow(contam_df)
