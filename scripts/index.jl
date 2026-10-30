@@ -89,7 +89,7 @@ joined_df = select(joined_df, [:Sample, :fs_used, :af_used, :q_used, :ma_used, :
             :Rej_Artefact, :Rej_Min_Ag, :Rej_Contam, :Rej_Panel, :Rej_Seqs, :Final_Seqs, :Collapsed_Seqs)
 
 #create TOTALS record
-tot_rec=["Totals",missing,missing,missing,missing,missing,sum(joined_df[:,:Porpid_Seqs]),
+tot_rec=["Totals","","","","","",sum(joined_df[:,:Porpid_Seqs]),
             sum(joined_df[:,:Rej_Artefact]), sum(joined_df[:,:Rej_Min_Ag]), sum(joined_df[:,:Rej_Contam]),
             sum(joined_df[:,:Rej_Panel]), sum(joined_df[:,:Rej_Seqs]), sum(joined_df[:,:Final_Seqs]),
             sum(joined_df[:,:Collapsed_Seqs]) ]

@@ -50,7 +50,7 @@ lda_thresh = 0.995       # default 0.995
 cluster_thresh = 0.015   # default 0.015
 proportion_thresh = 0.2  # default 0.2
 dist_thresh = 0.015      # default 0.015
-contam_toggle = "on"     # default "on", use "off" to disable
+contam_toggle = "off"     # default "on", use "off" to disable
 #postproc
 agreement_thresh = 0.7   # default 0.7
 af_thresh = 0.0          # default 0.25 (drops smallest 25% of non-outlier reads)
